@@ -106,8 +106,8 @@ T8
 
 **Done when**:
 
-- [ ] Testes: ok → "API online" (AC6); fetch rejeitado e 500 → "API indisponível" (AC7); título
-- [ ] Gate quick-fe passa; 4+ testes
+- [x] Testes: ok → "API online" (AC6); fetch rejeitado e 500 → "API indisponível" (AC7); título
+- [x] Gate quick-fe passa; 4+ testes
 
 **Tests**: unit
 **Gate**: quick-fe
