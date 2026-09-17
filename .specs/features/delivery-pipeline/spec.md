@@ -145,10 +145,10 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | SKEL-03 | P1: Esqueleto (AC 8) | Tasks | Implementing |
 | CI-01 | P1: CI e segurança (AC 1–2) | Tasks | Implementing |
 | SEC-01 | P1: CI e segurança (AC 3–5, 7) | Tasks | Implementing |
-| IAC-01 | P1: CI e segurança (AC 6) | Tasks | Pending |
-| SONAR-01 | P1: SonarQube (AC 1–2) | Tasks | Pending |
+| IAC-01 | P1: CI e segurança (AC 6) | Tasks | Implementing |
+| SONAR-01 | P1: SonarQube (AC 1–2) | Tasks | Implementing |
 | SONAR-02 | P1: SonarQube (AC 3–4) | Tasks | Pending |
-| INFRA-01 | P1: Deploy (AC 1) | Tasks | Pending |
+| INFRA-01 | P1: Deploy (AC 1) | Tasks | Implementing |
 | CD-01 | P1: Deploy (AC 2–7), Edge Cases | Tasks | Pending |
 | CD-02 | P1: Deploy (AC 8) | Tasks | Pending |
 

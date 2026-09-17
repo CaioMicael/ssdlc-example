@@ -166,7 +166,7 @@ T8
 
 **Done when**:
 
-- [ ] Run do `ci` verde na aba Actions (backend, frontend, secrets, deps, image)
+- [x] Run do `ci` verde na aba Actions (backend, frontend, secrets, deps, image)
 
 **Tests**: none
 **Gate**: remote
