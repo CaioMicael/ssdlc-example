@@ -61,8 +61,8 @@
 ## Handoff
 
 - **Feature**: delivery-pipeline (foco atual: infra primeiro). task-time-tracking fica em espera, com spec escrita; o banco de dados (privado, criptografado, backup de 7 dias, credencial em gerenciador de segredos) entra nela.
-- **Phase**: Tasks — spec, design e tasks (18 tarefas, 2 EC2 simples) validados; aguardando aprovação
-- **Next step**: Usuário aprova as tarefas e roda `gh auth login`; executar T1
+- **Phase**: Tasks — spec, design e tasks (8 tarefas agrupadas, 2 EC2 simples) validados; aguardando aprovação
+- **Next step**: Usuário aprova as tarefas; executar T1
 - **Environment**: AWS CLI, Terraform e gh instalados via winget; profile AWS local `ssdlc` (credenciais do Learner Lab, expiram); Docker Desktop estava parado
 - **Blockers**: nenhum
-- **Branch**: n/a (repositório git ainda não inicializado)
+- **Branch**: main (origin = github.com/CaioMicael/ssdlc-example, commit inicial 46fddca)

@@ -11,6 +11,8 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 **Design**: `.specs/features/delivery-pipeline/design.md`
 **Status**: Draft
 
+> Tarefas agrupadas a pedido do usuário (velocidade): 8 tarefas, um commit por tarefa. Repositório `CaioMicael/ssdlc-example` já criado, clonado e com commit inicial. `gh` (login) só é necessário a partir da T7 para secrets/variables — alternativa: usuário cadastra pela UI do GitHub.
+
 ---
 
 ## Test Coverage Matrix
@@ -32,9 +34,9 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 | Gate Level | When to Use | Command |
 | ---------- | ----------- | ------- |
-| Quick | Tarefas de backend | `cd backend && go vet ./... && go test ./...` |
-| Quick-FE | Tarefas de frontend | `cd frontend && npm run lint && npm run typecheck && npm test -- --run` |
-| Build | Scaffold, Dockerfile, config, scripts | Quick + Quick-FE + `npm run build` + `docker build -t ssdlc-example:local .` (se Docker Desktop ativo) / `bash -n <script>` |
+| Quick | Backend | `cd backend && go vet ./... && go test ./...` |
+| Quick-FE | Frontend | `cd frontend && npm run lint && npm run typecheck && npm test -- --run && npm run build` |
+| Build | Dockerfile, config, scripts | `docker build -t ssdlc-example:local .` (se Docker Desktop ativo; senão job `image` do CI) / `bash -n <script>` |
 | Workflow | `.github/workflows/*` | `go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12` |
 | Terraform | `infra/` | `terraform -chdir=infra fmt -check && terraform -chdir=infra init -backend=false && terraform -chdir=infra validate` |
 | Remote | GitHub/AWS | `gh run watch --exit-status`; `curl -fsS <url>` |
@@ -47,26 +49,24 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 ```
 T1 → T2 → T3
+```
+
+### Phase 2: CI
+
+```
 T4 → T5
-T6
 ```
 
-### Phase 2: CI e segurança
+### Phase 3: Terraform e SonarQube
 
 ```
-T7 → T8 → T9 → T10 → T11
-```
-
-### Phase 3: Terraform (2 EC2) e SonarQube
-
-```
-T12 → T13 → T14 → T15
+T6 → T7
 ```
 
 ### Phase 4: Deploy
 
 ```
-T16 → T17 → T18
+T8
 ```
 
 ---
@@ -75,10 +75,10 @@ T16 → T17 → T18
 
 ### Phase 1: Esqueleto local
 
-#### T1: Handler de healthz
+#### T1: Backend Go completo
 
-**What**: Módulo Go `backend` + `HealthHandler` → 200, `application/json`, `{"status":"ok"}`.
-**Where**: `backend/internal/httpapi/health.go`
+**What**: Módulo `backend` com `HealthHandler`, `NewRouter(webDir)` (healthz, 404 `/api/*`, estático, fallback SPA) e `cmd/api` com `run(ctx, getenv, ready)` (PORT default 8080, WEB_DIR, slog JSON, shutdown ≤10 s).
+**Where**: `backend/` (internal/httpapi, cmd/api)
 **Depends on**: None
 **Reuses**: nada
 **Requirement**: SKEL-01
@@ -86,139 +86,64 @@ T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Teste valida status, header e corpo exato (AC1)
-- [ ] Gate quick passa; 1+ testes
-
-**Tests**: unit
-**Gate**: quick
-**Commit**: `feat(backend): add healthz handler`
-
----
-
-#### T2: Router com 404 de API e fallback SPA
-
-**What**: `NewRouter(webDir)`: `/healthz`, 404 em `/api/*`, arquivo estático, fallback `index.html`.
-**Where**: `backend/internal/httpapi/router.go`
-**Depends on**: T1
-**Reuses**: `HealthHandler`
-**Requirement**: SKEL-01
-**Tools**: Skill `golang-pro`
-
-**Done when**:
-
-- [ ] Testes: `/api/x` → 404 (AC2); `/rota/qualquer` → `index.html` (AC3); arquivo existente servido; `/healthz` via router; traversal não sai do `webDir`
-- [ ] Gate quick passa; 6+ testes
-
-**Tests**: unit
-**Gate**: quick
-**Commit**: `feat(backend): add router with api 404 and spa fallback`
-
----
-
-#### T3: Entrypoint com PORT e shutdown gracioso
-
-**What**: `main.go` + `run(ctx, getenv, ready)`; `PORT` default 8080; `WEB_DIR`; logs `slog` JSON; shutdown ≤10 s.
-**Where**: `backend/cmd/api/main.go`
-**Depends on**: T2
-**Reuses**: `NewRouter`
-**Requirement**: SKEL-01
-**Tools**: Skill `golang-pro`
-
-**Done when**:
-
-- [ ] Testes: default 8080 e override (AC4); requisição lenta conclui 200 após cancelar ctx e `run` retorna <10 s (AC5)
+- [ ] Testes cobrem AC1 (status/header/corpo), AC2 (404), AC3 (fallback + arquivo estático + traversal), AC4 (default/override), AC5 (requisição em andamento conclui; retorno <10 s)
 - [ ] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick
-**Commit**: `feat(backend): add api entrypoint with graceful shutdown`
+**Commit**: `feat(backend): add healthz api with spa serving and graceful shutdown`
 
 ---
 
-#### T4: Scaffold do frontend
+#### T2: Frontend completo
 
-**What**: Vite React TS + ESLint + Vitest/Testing Library + coverage lcov; scripts `lint`, `typecheck`, `test`, `build`; proxy `/healthz` → `:8080`.
-**Where**: `frontend/package.json`
-**Depends on**: None
+**What**: Scaffold Vite React TS (ESLint, Vitest, Testing Library, coverage lcov, proxy `/healthz`) + `App` com "SSDLC Example" e `useHealth` → "API online" / "API indisponível".
+**Where**: `frontend/`
+**Depends on**: T1
 **Reuses**: template `create-vite react-ts`
-**Tools**: Skill `react`
-
-**Done when**:
-
-- [ ] `npm run lint`, `typecheck`, `build` passam; `npm test -- --run` executa
-
-**Tests**: none
-**Gate**: build
-**Commit**: `chore(frontend): scaffold vite react typescript app`
-
----
-
-#### T5: Tela de status da API
-
-**What**: `App` com "SSDLC Example" e `useHealth` → "API online" / "API indisponível".
-**Where**: `frontend/src/App.tsx`
-**Depends on**: T4
-**Reuses**: scaffold
 **Requirement**: SKEL-02
 **Tools**: Skill `react`
 
 **Done when**:
 
-- [ ] Testes: ok → "API online" (AC6); fetch rejeitado → "API indisponível"; 500 → "API indisponível" (AC7); título
+- [ ] Testes: ok → "API online" (AC6); fetch rejeitado e 500 → "API indisponível" (AC7); título
 - [ ] Gate quick-fe passa; 4+ testes
 
 **Tests**: unit
 **Gate**: quick-fe
-**Commit**: `feat(frontend): show api health status`
+**Commit**: `feat(frontend): add app showing api health status`
 
 ---
 
-#### T6: Dockerfile
+#### T3: Dockerfile e higiene do repositório
 
-**What**: Multi-stage node → go → distroless nonroot com `/web`.
-**Where**: `Dockerfile`
-**Depends on**: None
+**What**: `.gitignore` (node_modules, dist, coverage, `.terraform/`, `*.tfstate*`, `.env*`); `.golangci.yml`; `Dockerfile` multi-stage node → go → distroless nonroot.
+**Where**: raiz (`Dockerfile`, `.gitignore`, `.golangci.yml`)
+**Depends on**: T2
 **Reuses**: backend e frontend
 **Requirement**: SKEL-03
 **Tools**: nenhum
 
 **Done when**:
 
-- [ ] `docker build` + `docker run -p 8080:8080` → `/healthz` 200 e `/` com "SSDLC Example"; usuário não-root (se Docker Desktop indisponível, gate transferido ao job `image` da T10)
+- [ ] `git status` sem artefatos; busca por `ASIA`/`aws_secret` vazia
+- [ ] Build gate: imagem sobe, `/healthz` 200, `/` com "SSDLC Example", usuário não-root (ou transferido ao job `image` na T5)
 
 **Tests**: none
 **Gate**: build
-**Commit**: `build: add single container image`
+**Commit**: `build: add container image and repository hygiene`
 
 ---
 
-### Phase 2: CI e segurança
+### Phase 2: CI
 
-#### T7: Git e higiene do repositório
+#### T4: Workflow de CI completo
 
-**What**: `git init -b main`, `.gitignore` (node_modules, dist, coverage, `.terraform/`, `*.tfstate*`, `.env*`), `.golangci.yml`.
-**Where**: `.gitignore`
-**Depends on**: None
-**Reuses**: nada
-**Tools**: nenhum
-
-**Done when**:
-
-- [ ] `git status` sem artefatos/estado; busca por `ASIA`/`aws_secret` no repo vazia
-
-**Tests**: none
-**Gate**: build
-**Commit**: `chore: initialize repository hygiene`
-
----
-
-#### T8: CI de backend e frontend
-
-**What**: `ci.yml` com jobs `backend` e `frontend`, cobertura como artefato, concurrency, `permissions: contents: read`, actions por SHA.
+**What**: `ci.yml` com jobs `backend`, `frontend` (cobertura como artefato), `secrets` (gitleaks), `deps` (trivy fs), `image` (build + trivy image); concurrency; `permissions: contents: read`; actions por SHA.
 **Where**: `.github/workflows/ci.yml`
-**Depends on**: T7
+**Depends on**: T3
 **Reuses**: gates locais
-**Requirement**: CI-01
+**Requirement**: CI-01, SEC-01
 **Tools**: nenhum
 
 **Done when**:
@@ -227,59 +152,21 @@ T16 → T17 → T18
 
 **Tests**: none
 **Gate**: workflow
-**Commit**: `ci: add backend and frontend checks`
+**Commit**: `ci: add build, test and security scanning pipeline`
 
 ---
 
-#### T9: Jobs de segredos e dependências
+#### T5: Push e CI verde
 
-**What**: Jobs `secrets` (gitleaks, histórico completo) e `deps` (trivy fs HIGH,CRITICAL).
-**Where**: `.github/workflows/ci.yml`
-**Depends on**: T8
-**Reuses**: estrutura do T8
-**Requirement**: SEC-01
-**Tools**: nenhum
-
-**Done when**:
-
-- [ ] actionlint passa
-
-**Tests**: none
-**Gate**: workflow
-**Commit**: `ci: add secret and dependency scanning`
-
----
-
-#### T10: Job de imagem
-
-**What**: Job `image`: docker build + trivy image `--ignore-unfixed` HIGH,CRITICAL.
-**Where**: `.github/workflows/ci.yml`
-**Depends on**: T9
-**Reuses**: `Dockerfile`
-**Requirement**: SEC-01
-**Tools**: nenhum
-
-**Done when**:
-
-- [ ] actionlint passa
-
-**Tests**: none
-**Gate**: workflow
-**Commit**: `ci: add container image scan`
-
----
-
-#### T11: Publicar no GitHub com CI verde
-
-**What**: `gh repo create ssdlc-example --public --source . --push`. **Pré-requisito do usuário:** `! gh auth login`.
+**What**: `git push origin main` para `CaioMicael/ssdlc-example` (git e remote já configurados).
 **Where**: GitHub (remoto)
-**Depends on**: T10
-**Reuses**: commits anteriores
-**Tools**: `gh`
+**Depends on**: T4
+**Reuses**: commits T1–T4
+**Tools**: `gh`, `git`
 
 **Done when**:
 
-- [ ] Repo público criado, `main` enviada, `gh run watch --exit-status` do `ci` verde
+- [ ] Run do `ci` verde na aba Actions (backend, frontend, secrets, deps, image)
 
 **Tests**: none
 **Gate**: remote
@@ -287,79 +174,40 @@ T16 → T17 → T18
 
 ---
 
-### Phase 3: Terraform (2 EC2) e SonarQube
+### Phase 3: Terraform e SonarQube
 
-#### T12: Terraform das duas EC2
+#### T6: Terraform das 2 EC2 + job de IaC
 
-**What**: Stack único: SG app (80), SG sonar (9000), EC2 app t3.micro com Docker, EC2 sonar t3.medium com SonarQube em Docker, EIPs, IMDSv2, discos criptografados, `LabInstanceProfile`, outputs, `.trivyignore` justificado.
+**What**: `infra/main.tf` (SG 80 e 9000, EC2 app t3.micro com Docker, EC2 sonar t3.medium com SonarQube, EIPs, IMDSv2, discos criptografados, `LabInstanceProfile`, outputs, `.trivyignore` justificado) + job `iac` no CI.
 **Where**: `infra/main.tf`
-**Depends on**: None
-**Reuses**: VPC default, `LabInstanceProfile`
-**Requirement**: INFRA-01, SONAR-01
+**Depends on**: T5
+**Reuses**: VPC default
+**Requirement**: INFRA-01, SONAR-01, IAC-01
 **Tools**: nenhum
 
 **Done when**:
 
-- [ ] Gate terraform passa; `trivy config infra` sem HIGH/CRITICAL não justificados
+- [ ] Gate terraform passa; `trivy config infra` sem HIGH/CRITICAL não justificados; actionlint passa
 
 **Tests**: none
 **Gate**: terraform
-**Commit**: `feat(infra): add app and sonarqube ec2 instances`
+**Commit**: `feat(infra): add app and sonarqube ec2 with iac checks`
 
 ---
 
-#### T13: Job de IaC no CI
+#### T7: Apply, SonarQube e job de análise
 
-**What**: Job `iac`: fmt -check, init -backend=false, validate, trivy config.
-**Where**: `.github/workflows/ci.yml`
-**Depends on**: T12
-**Reuses**: gate terraform
-**Requirement**: IAC-01
-**Tools**: nenhum
-
-**Done when**:
-
-- [ ] actionlint passa
-
-**Tests**: none
-**Gate**: workflow
-**Commit**: `ci: add terraform validation and iac scan`
-
----
-
-#### T14: Aplicar infra e preparar SonarQube
-
-**What**: `terraform apply` local (profile `ssdlc`); verificar EC2 no SSM; SonarQube UP; usuário troca senha admin e gera token; definir variables `APP_INSTANCE_ID`, `APP_URL`, `SONAR_HOST_URL` e secret `SONAR_TOKEN` via `gh`.
-**Where**: AWS + GitHub (remoto)
-**Depends on**: T13
-**Reuses**: stack T12
-**Requirement**: INFRA-01, SONAR-01
+**What**: `terraform apply` local; usuário troca senha admin e gera token; `gh` define `APP_INSTANCE_ID`, `APP_URL`, `SONAR_HOST_URL`, `SONAR_TOKEN`; `sonar-project.properties` + job `sonar` com quality gate; push.
+**Where**: `sonar-project.properties`
+**Depends on**: T6
+**Reuses**: stack T6, cobertura T4
+**Requirement**: SONAR-01, SONAR-02
 **Tools**: `terraform`, `aws`, `gh`
 
 **Done when**:
 
-- [ ] `curl -fsS http://<ip-sonar>:9000/api/system/status` → `"status":"UP"`
-- [ ] `aws ssm describe-instance-information` lista a EC2 app como `Online`
-- [ ] `curl http://<ip-app>:22` não conecta (porta fechada)
-
-**Tests**: none
-**Gate**: remote
-**Commit**: nenhum (estado local, gitignored)
-
----
-
-#### T15: Job SonarQube
-
-**What**: `sonar-project.properties` (sources backend+frontend, exclusões de teste, `sonar.go.coverage.reportPaths`, `sonar.javascript.lcov.reportPaths`) + job `sonar` com quality gate.
-**Where**: `sonar-project.properties`
-**Depends on**: T14
-**Reuses**: artefatos de cobertura (T8)
-**Requirement**: SONAR-02
-**Tools**: nenhum
-
-**Done when**:
-
-- [ ] actionlint passa; push mostra check `sonar` verde e projeto no SonarQube com cobertura > 0%
+- [ ] `http://<ip-sonar>:9000/api/system/status` → UP; EC2 app `Online` no SSM
+- [ ] Check `sonar` verde e projeto com cobertura > 0%
 
 **Tests**: none
 **Gate**: remote
@@ -369,104 +217,46 @@ T16 → T17 → T18
 
 ### Phase 4: Deploy
 
-#### T16: Script de refresh das credenciais
+#### T8: Deploy na EC2 ponta a ponta
 
-**What**: Lê o profile `ssdlc` e roda `gh secret set` para `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`, sem imprimir valores.
-**Where**: `scripts/refresh-aws-secrets.sh`
-**Depends on**: None
-**Reuses**: profile `ssdlc`
-**Requirement**: CD-02
+**What**: `scripts/refresh-aws-secrets.sh` (executado) + `deploy.yml` (`workflow_run` do ci na main, push GHCR `:sha`, checagem de credencial com mensagem fixa, SSM pull→replace, smoke test 3 min, `concurrency: deploy`) + primeiro deploy.
+**Where**: `.github/workflows/deploy.yml`
+**Depends on**: T7
+**Reuses**: variables/secrets da T7
+**Requirement**: CD-01, CD-02
 **Tools**: `gh`, `aws`
 
 **Done when**:
 
-- [ ] `bash -n` passa; executado e `gh secret list` mostra os 3
-
-**Tests**: none
-**Gate**: build
-**Commit**: `feat(scripts): add aws lab credentials refresh script`
-
----
-
-#### T17: Workflow de deploy
-
-**What**: `deploy.yml`: `workflow_run` do `ci` com sucesso na `main`, push GHCR `:sha`, checagem de credencial com mensagem fixa, SSM send-command (pull antes de remover), wait, smoke test 3 min, `concurrency: deploy`.
-**Where**: `.github/workflows/deploy.yml`
-**Depends on**: T16
-**Reuses**: variables da T14
-**Requirement**: CD-01
-**Tools**: nenhum
-
-**Done when**:
-
-- [ ] actionlint passa; `permissions` só `contents: read` + `packages: write`
-
-**Tests**: none
-**Gate**: workflow
-**Commit**: `ci: add ec2 deploy workflow`
-
----
-
-#### T18: Primeiro deploy verificado
-
-**What**: Push na `main`, CI e deploy verdes, pacote GHCR público, app no ar.
-**Where**: GitHub + AWS (remoto)
-**Depends on**: T17
-**Reuses**: tudo acima
-**Tools**: `gh`, navegador
-
-**Done when**:
-
+- [ ] `bash -n` e actionlint passam
 - [ ] `gh run watch --exit-status` do `deploy` verde
-- [ ] `curl -fsS http://<ip-app>/healthz` → `{"status":"ok"}` e `/` mostra "SSDLC Example"
+- [ ] `curl -fsS http://<ip-app>/healthz` → `{"status":"ok"}`; `/` mostra "SSDLC Example"
 
 **Tests**: none
 **Gate**: remote
-**Commit**: nenhum (verificação)
+**Commit**: `ci: add ec2 deploy workflow`
 
 ---
-
-## Phase Execution Map
-
-```
-Phase 1 → Phase 2 → Phase 3 → Phase 4
-```
-
-Phase 1: T1→T2→T3, T4→T5, T6 · Phase 2: T7→…→T11 · Phase 3: T12→…→T15 · Phase 4: T16→T17→T18
-
----
-
-## Task Granularity Check
-
-| Task | Scope | Status |
-| ---- | ----- | ------ |
-| T1, T2, T3, T5 | 1 handler/router/entrypoint/componente | ✅ Granular |
-| T4 | Scaffold gerado por ferramenta | ⚠️ Coeso |
-| T6, T7, T16 | 1 arquivo | ✅ Granular |
-| T8–T10, T13, T17 | 1–2 jobs de workflow | ✅ Granular |
-| T12 | 1 stack Terraform (2 EC2) | ⚠️ Coeso, pedido "simples" |
-| T15 | 1 properties + 1 job | ⚠️ Inseparáveis |
-| T11, T14, T18 | 1 operação remota | ✅ Granular |
 
 ## Diagram-Definition Cross-Check
 
 | Task | Depends On (task body) | Diagram Shows | Status |
 | ---- | ---------------------- | ------------- | ------ |
-| T1, T4, T6, T7, T12, T16 | None | início de cadeia | ✅ Match |
+| T1 | None | início | ✅ Match |
 | T2 / T3 | T1 / T2 | T1 → T2 → T3 | ✅ Match |
+| T4 | T3 (fase anterior) | início da fase 2 | ✅ Match |
 | T5 | T4 | T4 → T5 | ✅ Match |
-| T8–T11 | anterior | T7 → … → T11 | ✅ Match |
-| T13–T15 | anterior | T12 → … → T15 | ✅ Match |
-| T17 / T18 | T16 / T17 | T16 → T17 → T18 | ✅ Match |
+| T6 | T5 (fase anterior) | início da fase 3 | ✅ Match |
+| T7 | T6 | T6 → T7 | ✅ Match |
+| T8 | T7 (fase anterior) | fase 4 | ✅ Match |
 
 ## Test Co-location Validation
 
 | Task | Code Layer Created/Modified | Matrix Requires | Task Says | Status |
 | ---- | --------------------------- | --------------- | --------- | ------ |
-| T1, T2 | Go handler/router | unit | unit | ✅ OK |
-| T3 | Go entrypoint | unit | unit | ✅ OK |
-| T5 | React component/hook | unit | unit | ✅ OK |
-| T4, T6, T7, T16 | Config/Dockerfile/script | none | none | ✅ OK |
-| T8–T10, T13, T15, T17 | Workflows | none | none | ✅ OK |
-| T12 | Terraform | none | none | ✅ OK |
-| T11, T14, T18 | Verificação remota | none | none | ✅ OK |
+| T1 | Go handler/router/entrypoint | unit | unit | ✅ OK |
+| T2 | React component/hook | unit | unit | ✅ OK |
+| T3 | Dockerfile/config | none | none | ✅ OK |
+| T4 | Workflow | none | none | ✅ OK |
+| T5, T7, T8 | Remoto + config/workflow | none | none | ✅ OK |
+| T6 | Terraform + workflow | none | none | ✅ OK |
