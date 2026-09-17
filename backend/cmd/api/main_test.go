@@ -148,7 +148,7 @@ func TestRun_GracefulShutdown_WaitsForInFlightRequest(t *testing.T) {
 			reqResult <- result{err: err}
 			return
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 		_, _ = io.ReadAll(resp.Body)
 		reqResult <- result{status: resp.StatusCode}
 	}()
