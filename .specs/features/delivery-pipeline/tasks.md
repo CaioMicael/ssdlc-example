@@ -126,8 +126,8 @@ T8
 
 **Done when**:
 
-- [ ] `git status` sem artefatos; busca por `ASIA`/`aws_secret` vazia
-- [ ] Build gate: imagem sobe, `/healthz` 200, `/` com "SSDLC Example", usuário não-root (ou transferido ao job `image` na T5)
+- [x] `git status` sem artefatos; busca por `ASIA`/`aws_secret` vazia
+- [x] Build gate: imagem sobe, `/healthz` 200, `/` com "SSDLC Example", usuário não-root (ou transferido ao job `image` na T5)
 
 **Tests**: none
 **Gate**: build

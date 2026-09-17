@@ -1,0 +1,8 @@
+.git
+.claude
+.specs
+**/node_modules
+**/dist
+**/coverage
+infra
+.github
