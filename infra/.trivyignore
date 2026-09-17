@@ -1,0 +1,6 @@
+# AD-007 (.specs/STATE.md): infra is intentionally minimal, two public EC2
+# instances behind Terraform with local state. Both security groups need
+# unrestricted egress so user_data can install packages and pull Docker
+# images (apt/dnf mirrors, ghcr.io, hub.docker.com) from IPs that are not
+# fixed in advance.
+AWS-0104

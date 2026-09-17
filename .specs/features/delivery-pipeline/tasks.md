@@ -187,7 +187,7 @@ T8
 
 **Done when**:
 
-- [ ] Gate terraform passa; `trivy config infra` sem HIGH/CRITICAL não justificados; actionlint passa
+- [x] Gate terraform passa; `trivy config infra` sem HIGH/CRITICAL não justificados; actionlint passa
 
 **Tests**: none
 **Gate**: terraform
