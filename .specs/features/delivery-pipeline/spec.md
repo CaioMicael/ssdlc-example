@@ -46,7 +46,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | SonarQube fora do ar (lab parado) | Check do Sonar falha; o usuário inicia o lab e roda de novo | Learner Lab para as EC2 no fim da sessão | n |
 | PR de fork | Sonar e deploy não rodam (sem secrets) | Repo público; secrets não vão para forks | n |
 | Limiar dos scans | Falha em High/Critical; imagem só quando há correção disponível | Equilíbrio segurança/ruído | n |
-| Versões | Go 1.24, Node 22 LTS | Instaladas localmente | n |
+| Versões | Go 1.26.8 (toolchain), Node 22 LTS | Go 1.24 é EOL e a stdlib tinha 19 CVEs High/Critical no scan Trivy | n |
 
 **Open questions:** none - all resolved or logged above (required before the spec is confirmed).
 
