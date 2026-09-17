@@ -142,9 +142,9 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | -------------- | ----- | ----- | ------ |
 | SKEL-01 | P1: Esqueleto (AC 1–5) | Tasks | Implementing |
 | SKEL-02 | P1: Esqueleto (AC 6–7) | Tasks | Implementing |
-| SKEL-03 | P1: Esqueleto (AC 8) | Tasks | Pending |
-| CI-01 | P1: CI e segurança (AC 1–2) | Tasks | Pending |
-| SEC-01 | P1: CI e segurança (AC 3–5, 7) | Tasks | Pending |
+| SKEL-03 | P1: Esqueleto (AC 8) | Tasks | Implementing |
+| CI-01 | P1: CI e segurança (AC 1–2) | Tasks | Implementing |
+| SEC-01 | P1: CI e segurança (AC 3–5, 7) | Tasks | Implementing |
 | IAC-01 | P1: CI e segurança (AC 6) | Tasks | Pending |
 | SONAR-01 | P1: SonarQube (AC 1–2) | Tasks | Pending |
 | SONAR-02 | P1: SonarQube (AC 3–4) | Tasks | Pending |
