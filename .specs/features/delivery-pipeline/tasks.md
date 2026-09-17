@@ -86,8 +86,8 @@ T8
 
 **Done when**:
 
-- [ ] Testes cobrem AC1 (status/header/corpo), AC2 (404), AC3 (fallback + arquivo estático + traversal), AC4 (default/override), AC5 (requisição em andamento conclui; retorno <10 s)
-- [ ] Gate quick passa; 8+ testes
+- [x] Testes cobrem AC1 (status/header/corpo), AC2 (404), AC3 (fallback + arquivo estático + traversal), AC4 (default/override), AC5 (requisição em andamento conclui; retorno <10 s)
+- [x] Gate quick passa; 8+ testes
 
 **Tests**: unit
 **Gate**: quick

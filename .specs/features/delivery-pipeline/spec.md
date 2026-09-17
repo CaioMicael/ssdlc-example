@@ -140,7 +140,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| SKEL-01 | P1: Esqueleto (AC 1–5) | Tasks | Pending |
+| SKEL-01 | P1: Esqueleto (AC 1–5) | Tasks | Implementing |
 | SKEL-02 | P1: Esqueleto (AC 6–7) | Tasks | Pending |
 | SKEL-03 | P1: Esqueleto (AC 8) | Tasks | Pending |
 | CI-01 | P1: CI e segurança (AC 1–2) | Tasks | Pending |
