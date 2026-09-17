@@ -148,7 +148,7 @@ T8
 
 **Done when**:
 
-- [ ] actionlint passa; todo `uses:` com SHA de 40 caracteres
+- [x] actionlint passa; todo `uses:` com SHA de 40 caracteres
 
 **Tests**: none
 **Gate**: workflow
