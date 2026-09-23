@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	_ "modernc.org/sqlite"
 )
@@ -177,15 +176,15 @@ func (s *Store) Create(ctx context.Context, title, description string) (Task, er
 		return Task{}, err
 	}
 
-	now := time.Now().UTC().Format(time.RFC3339Nano)
+	createdAt := formatTime(now())
 	task := Task{
 		ID:          id,
 		Title:       trimmedTitle,
 		Description: description,
 		Status:      StatusTodo,
 		Archived:    false,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		CreatedAt:   createdAt,
+		UpdatedAt:   createdAt,
 	}
 
 	_, err = s.db.ExecContext(ctx,
@@ -326,7 +325,7 @@ func (s *Store) Update(ctx context.Context, id string, p Patch) (Task, error) {
 		task.Status = *p.Status
 	}
 
-	task.UpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
+	task.UpdatedAt = formatTime(now())
 
 	_, err = tx.ExecContext(ctx,
 		`UPDATE tasks SET title = ?, description = ?, status = ?, updated_at = ? WHERE id = ?`,
@@ -367,7 +366,7 @@ func (s *Store) SetArchived(ctx context.Context, id string, archived bool) (Task
 	}
 
 	task.Archived = archived
-	task.UpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
+	task.UpdatedAt = formatTime(now())
 
 	_, err = tx.ExecContext(ctx,
 		`UPDATE tasks SET archived = ?, updated_at = ? WHERE id = ?`,
