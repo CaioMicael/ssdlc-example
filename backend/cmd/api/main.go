@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 	"time"
 
@@ -23,6 +22,11 @@ const shutdownTimeout = 10 * time.Second
 // the router without changing production behavior. Production never
 // overrides it.
 var wrapHandler = func(h http.Handler) http.Handler { return h }
+
+// onStoreOpened lets tests observe the store instance run opens right after
+// a successful store.Open, e.g. to close it and simulate a database outage
+// while the server is running. Production never overrides it.
+var onStoreOpened = func(*store.Store) {}
 
 // run starts the HTTP server and blocks until ctx is canceled, then shuts it
 // down gracefully (waiting up to shutdownTimeout for in-flight requests).
@@ -41,20 +45,17 @@ func run(ctx context.Context, getenv func(string) string, ready chan<- string) e
 		webDir = "./web"
 	}
 
-	// SPEC_DEVIATION: DB_PATH wiring, the /healthz DB check, and the
-	// production default path are T3's scope (design.md "Wiring, volume e
-	// deploy"). This task only needs NewRouter's new signature to compile;
-	// defaulting to the OS temp dir (instead of "./app.db") avoids leaving
-	// a stray database file in the repo when running `go test`.
 	dbPath := getenv("DB_PATH")
 	if dbPath == "" {
-		dbPath = filepath.Join(os.TempDir(), "ssdlc-example.db")
+		dbPath = "./app.db"
 	}
+	logger.Info("opening database", "db_path", dbPath)
 	st, err := store.Open(dbPath)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = st.Close() }()
+	onStoreOpened(st)
 
 	ln, err := net.Listen("tcp", ":"+port)
 	if err != nil {

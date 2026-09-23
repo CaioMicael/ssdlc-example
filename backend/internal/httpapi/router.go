@@ -9,7 +9,7 @@ import (
 
 // NewRouter builds the HTTP handler for the API and static frontend.
 //
-// - GET /healthz is handled by HealthHandler.
+// - GET /healthz reports 200 when s.Ping succeeds and 503 otherwise.
 // - The task CRUD and archive/restore routes are registered against s.
 // - Any other path under /api/ returns 404 (no matching API route).
 // - Any other GET path serves the matching file under webDir when it exists
@@ -18,7 +18,7 @@ import (
 func NewRouter(webDir string, s TaskStore) http.Handler {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/healthz", HealthHandler)
+	mux.HandleFunc("/healthz", NewHealthHandler(s))
 
 	registerTaskRoutes(mux, s)
 

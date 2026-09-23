@@ -114,10 +114,10 @@ T4
 
 **Done when**:
 
-- [ ] Testes: `DB_PATH` custom é usado; `/healthz` retorna 200 com banco ok e 503 com banco inacessível
-- [ ] Gate quick e workflow passam
-- [ ] Build gate: imagem sobe com volume, cria tarefa, container é removido e recriado, e a tarefa continua lá
-- [ ] Gate quick passa; 4+ testes novos
+- [x] Testes: `DB_PATH` custom é usado; `/healthz` retorna 200 com banco ok e 503 com banco inacessível
+- [x] Gate quick e workflow passam
+- [x] Build gate: imagem sobe com volume, cria tarefa, container é removido e recriado, e a tarefa continua lá
+- [x] Gate quick passa; 4+ testes novos
 
 **Tests**: unit
 **Gate**: build

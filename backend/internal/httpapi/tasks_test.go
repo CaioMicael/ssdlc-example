@@ -493,6 +493,10 @@ func (fakeFailingStore) SetArchived(ctx context.Context, id string, archived boo
 	return store.Task{}, fmt.Errorf("driver connection reset by peer at 10.0.0.5:5432")
 }
 
+func (fakeFailingStore) Ping(ctx context.Context) error {
+	return fmt.Errorf("driver connection reset by peer at 10.0.0.5:5432")
+}
+
 // Edge case: an unexpected store failure maps to 500 INTERNAL_ERROR with a
 // generic message, never the underlying driver text.
 func TestCreateTask_UnexpectedStoreError_Returns500WithGenericMessage(t *testing.T) {

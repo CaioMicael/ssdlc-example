@@ -190,7 +190,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | ARCH-02 | P2: Arquivar e restaurar (AC 5–6) | Design | Implementing |
 | API-01 | Edge Cases: formato de erro, JSON inválido, payload, UUID | Design | Implementing |
 | API-02 | Edge Cases: rate limit, CORS | Design | Pending |
-| API-03 | Edge Cases: 503/500, healthz, logs | Design | Pending |
+| API-03 | Edge Cases: 503/500, healthz, logs | Design | Implementing |
 | API-04 | Edge Cases: erro de rede no frontend | Design | Pending |
 
 **Coverage:** 19 total, 0 mapped to tasks, 19 unmapped ⚠️ (esperado antes de Tasks)

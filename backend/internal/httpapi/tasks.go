@@ -28,6 +28,7 @@ type TaskStore interface {
 	Get(ctx context.Context, id string) (store.Task, error)
 	Update(ctx context.Context, id string, p store.Patch) (store.Task, error)
 	SetArchived(ctx context.Context, id string, archived bool) (store.Task, error)
+	Ping(ctx context.Context) error
 }
 
 // taskResponse is the JSON shape returned for a single task. total_seconds
