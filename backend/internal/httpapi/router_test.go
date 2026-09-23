@@ -9,8 +9,18 @@ import (
 )
 
 // AC2: any path under /api/ returns 404 because no API routes exist yet.
+// webDir contains a real index.html so this test also proves the /api/
+// handler does not fall through to the SPA fallback (a regression that
+// rewired /api/ to serveStaticOrFallback would still 200 with the index
+// body, or 404 only because the fixture happened to lack an index.html).
 func TestRouter_ApiPathReturns404(t *testing.T) {
-	router := NewRouter(t.TempDir())
+	webDir := t.TempDir()
+	indexContent := "<html><body>SSDLC Example</body></html>"
+	if err := os.WriteFile(filepath.Join(webDir, "index.html"), []byte(indexContent), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	router := NewRouter(webDir)
 
 	req := httptest.NewRequest("GET", "/api/nao-existe", nil)
 	rec := httptest.NewRecorder()
@@ -18,6 +28,9 @@ func TestRouter_ApiPathReturns404(t *testing.T) {
 
 	if rec.Code != 404 {
 		t.Fatalf("status = %d, want 404", rec.Code)
+	}
+	if strings.Contains(rec.Body.String(), indexContent) {
+		t.Fatalf("body leaked SPA index.html content for /api/ path: %q", rec.Body.String())
 	}
 }
 
