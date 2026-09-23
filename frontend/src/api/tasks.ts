@@ -10,6 +10,7 @@ export interface Task {
   archived: boolean
   created_at: string
   updated_at: string
+  total_seconds: number
 }
 
 interface ApiErrorBody {
@@ -34,7 +35,7 @@ export class TaskApiError extends Error {
   }
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
+export async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     let body: ApiErrorBody | undefined
     try {

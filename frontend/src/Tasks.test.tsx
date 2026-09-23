@@ -48,6 +48,7 @@ const task1: Task = {
   archived: false,
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
+  total_seconds: 0,
 }
 
 function listHandler(archived: boolean, tasks: Task[]): RouteHandler {
@@ -91,6 +92,7 @@ describe('Tasks feature', () => {
       archived: false,
       created_at: '2026-01-02T00:00:00Z',
       updated_at: '2026-01-02T00:00:00Z',
+      total_seconds: 0,
     }
     const createHandler: RouteHandler = {
       match: (url, init) => url === '/api/v1/tasks' && init?.method === 'POST',

@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import type { Task, TaskStatus } from './api/tasks'
+import { TimeEntries } from './TimeEntries'
+import { formatHm } from './timeFormat'
 
 const STATUS_LABEL: Record<TaskStatus, string> = {
   todo: 'A fazer',
@@ -13,6 +16,7 @@ interface TaskListProps {
   onArchive: (id: string) => void
   onRestore: (id: string) => void
   onToggleArchived: () => void
+  onStartTimer: (id: string) => void
 }
 
 export function TaskList({
@@ -22,7 +26,10 @@ export function TaskList({
   onArchive,
   onRestore,
   onToggleArchived,
+  onStartTimer,
 }: Readonly<TaskListProps>) {
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
   return (
     <div>
       <label>
@@ -45,6 +52,12 @@ export function TaskList({
                 <option value="in_progress">{STATUS_LABEL.in_progress}</option>
                 <option value="done">{STATUS_LABEL.done}</option>
               </select>
+              <span>Total: {formatHm(task.total_seconds)}</span>
+              {task.status !== 'done' && !task.archived && (
+                <button type="button" onClick={() => onStartTimer(task.id)}>
+                  Iniciar
+                </button>
+              )}
               {showArchived ? (
                 <button type="button" onClick={() => onRestore(task.id)}>
                   Restaurar
@@ -54,6 +67,13 @@ export function TaskList({
                   Arquivar
                 </button>
               )}
+              <button
+                type="button"
+                onClick={() => setExpandedId((prev) => (prev === task.id ? null : task.id))}
+              >
+                {expandedId === task.id ? 'Ocultar apontamentos' : 'Ver apontamentos'}
+              </button>
+              {expandedId === task.id && <TimeEntries taskId={task.id} />}
             </li>
           ))}
         </ul>
