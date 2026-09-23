@@ -26,7 +26,9 @@ var wrapHandler = func(h http.Handler) http.Handler { return h }
 // onStoreOpened lets tests observe the store instance run opens right after
 // a successful store.Open, e.g. to close it and simulate a database outage
 // while the server is running. Production never overrides it.
-var onStoreOpened = func(*store.Store) {}
+var onStoreOpened = func(*store.Store) {
+	// Intentionally empty: production needs no hook; tests override it.
+}
 
 // run starts the HTTP server and blocks until ctx is canceled, then shuts it
 // down gracefully (waiting up to shutdownTimeout for in-flight requests).

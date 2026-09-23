@@ -32,7 +32,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 | Gate Level | When to Use | Command |
 | ---------- | ----------- | ------- |
-| Quick | Tarefas de backend | `cd backend && go vet ./... && go test -count=1 ./...` |
+| Quick | Tarefas de backend | `cd backend && go vet ./... && go test -count=1 ./... && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2 run --config ../.golangci.yml ./...` (mesmo lint do CI; primeira execução compila a ferramenta e demora) |
 | Quick-FE | Tarefas de frontend | `cd frontend && npm run lint && npm run typecheck && npm test -- --run && npm run build` |
 | Build | Dockerfile / imagem | `docker build -t ssdlc-example:local .` + `docker run` com volume e escrita real no banco |
 | Workflow | `.github/workflows/*` | `go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12` |

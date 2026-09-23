@@ -22,12 +22,12 @@ export function TaskList({
   onArchive,
   onRestore,
   onToggleArchived,
-}: TaskListProps) {
+}: Readonly<TaskListProps>) {
   return (
     <div>
       <label>
-        <input type="checkbox" checked={showArchived} onChange={onToggleArchived} />
-        Mostrar arquivadas
+        <input type="checkbox" checked={showArchived} onChange={onToggleArchived} />{' '}
+        <span>Mostrar arquivadas</span>
       </label>
       {tasks.length === 0 ? (
         <p>Nenhuma tarefa ainda</p>

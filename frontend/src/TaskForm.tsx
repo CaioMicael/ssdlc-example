@@ -7,7 +7,7 @@ interface TaskFormProps {
   onCreate: (title: string, description: string) => Promise<Task>
 }
 
-export function TaskForm({ onCreate }: TaskFormProps) {
+export function TaskForm({ onCreate }: Readonly<TaskFormProps>) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})

@@ -53,7 +53,7 @@ export async function listTasks(archived: boolean): Promise<Task[]> {
   const response = await fetch(`/api/v1/tasks?archived=${archived}`)
   const data = await handleResponse<{ tasks: Task[] }>(response)
   if (!Array.isArray(data.tasks)) {
-    throw new Error('Resposta inválida do servidor')
+    throw new TypeError('Resposta inválida do servidor')
   }
   return data.tasks
 }

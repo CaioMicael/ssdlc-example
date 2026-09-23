@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 3,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "gate_fail::o gate local do backend roda golangci lint v2 13 2 com o golangci yml do repo porque go vet e go test sozinhos nao pegam errcheck staticcheck e o erro so aparece no ci",
+      "text": "O gate local do backend roda golangci-lint v2.13.2 com o .golangci.yml do repo, porque go vet e go test sozinhos nao pegam errcheck/staticcheck e o erro so aparece no CI.",
+      "signal": "gate_fail",
+      "scope": "backend",
+      "status": "candidate",
+      "features": [
+        "task-time-tracking"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PR#2 ci job backend + sonar (backend)"
+      ],
+      "created": "2026-09-23T02:17:07Z",
+      "last_seen": "2026-09-23T02:17:07Z"
+    },
+    {
+      "id": "L-002",
+      "key": "gate_fail::componentes react declaram props como readonly props e evitam texto solto ao lado de elemento jsx o quality gate do sonar reprova qualquer violacao nova no codigo novo",
+      "text": "Componentes React declaram props como Readonly<Props> e evitam texto solto ao lado de elemento JSX; o quality gate do Sonar reprova qualquer violacao nova no codigo novo.",
+      "signal": "gate_fail",
+      "scope": "frontend",
+      "status": "candidate",
+      "features": [
+        "task-time-tracking"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PR#2 sonar quality gate: 6 new_violations (frontend)"
+      ],
+      "created": "2026-09-23T02:17:08Z",
+      "last_seen": "2026-09-23T02:17:08Z"
+    }
+  ]
+}

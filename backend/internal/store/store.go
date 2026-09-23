@@ -158,7 +158,7 @@ func newUUIDv4() (string, error) {
 }
 
 // Create validates title and description, then inserts a new task with
-// status "todo" and archived=false, returning the created task.
+// StatusTodo and archived=false, returning the created task.
 func (s *Store) Create(ctx context.Context, title, description string) (Task, error) {
 	trimmedTitle, err := validateTitle(title)
 	if err != nil {
