@@ -140,17 +140,17 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| SKEL-01 | P1: Esqueleto (AC 1–5) | Tasks | Implementing |
-| SKEL-02 | P1: Esqueleto (AC 6–7) | Tasks | Implementing |
-| SKEL-03 | P1: Esqueleto (AC 8) | Tasks | Implementing |
-| CI-01 | P1: CI e segurança (AC 1–2) | Tasks | Implementing |
-| SEC-01 | P1: CI e segurança (AC 3–5, 7) | Tasks | Implementing |
-| IAC-01 | P1: CI e segurança (AC 6) | Tasks | Implementing |
-| SONAR-01 | P1: SonarQube (AC 1–2) | Tasks | Implementing |
-| SONAR-02 | P1: SonarQube (AC 3–4) | Tasks | Pending |
-| INFRA-01 | P1: Deploy (AC 1) | Tasks | Implementing |
-| CD-01 | P1: Deploy (AC 2–7), Edge Cases | Tasks | Pending |
-| CD-02 | P1: Deploy (AC 8) | Tasks | Pending |
+| SKEL-01 | P1: Esqueleto (AC 1–5) | Tasks | Verified |
+| SKEL-02 | P1: Esqueleto (AC 6–7) | Tasks | Verified |
+| SKEL-03 | P1: Esqueleto (AC 8) | Tasks | Verified |
+| CI-01 | P1: CI e segurança (AC 1–2) | Tasks | Verified |
+| SEC-01 | P1: CI e segurança (AC 3–5, 7) | Tasks | Verified |
+| IAC-01 | P1: CI e segurança (AC 6) | Tasks | Verified |
+| SONAR-01 | P1: SonarQube (AC 1–2) | Tasks | Verified |
+| SONAR-02 | P1: SonarQube (AC 3–4) | Tasks | Verified |
+| INFRA-01 | P1: Deploy (AC 1) | Tasks | Verified |
+| CD-01 | P1: Deploy (AC 2–7), Edge Cases | Tasks | Verified |
+| CD-02 | P1: Deploy (AC 8) | Tasks | Verified |
 
 **Coverage:** 11 total, 11 mapped to tasks, 0 unmapped
 

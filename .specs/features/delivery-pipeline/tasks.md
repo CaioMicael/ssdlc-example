@@ -206,8 +206,8 @@ T8
 
 **Done when**:
 
-- [ ] `http://<ip-sonar>:9000/api/system/status` → UP; EC2 app `Online` no SSM
-- [ ] Check `sonar` verde e projeto com cobertura > 0%
+- [x] `http://54.165.174.106:9000/api/system/status` → UP; EC2 app `i-0f46c5b4221c65703` Online no SSM
+- [x] Check `sonar` verde (run 35805513130, quality gate aprovado)
 
 **Tests**: none
 **Gate**: remote
@@ -229,8 +229,8 @@ T8
 **Done when**:
 
 - [x] `bash -n` e actionlint passam
-- [ ] `gh run watch --exit-status` do `deploy` verde
-- [ ] `curl -fsS http://<ip-app>/healthz` → `{"status":"ok"}`; `/` mostra "SSDLC Example"
+- [x] Run `deploy` 35805603287 verde (build+push GHCR, SSM, smoke test)
+- [x] `curl http://44.218.231.163/healthz` → `{"status":"ok"}`; navegador mostra "SSDLC Example" e "API online"
 
 **Tests**: none
 **Gate**: remote
