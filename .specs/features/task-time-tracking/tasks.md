@@ -204,10 +204,10 @@ Phase 1: T1 → T2 → T3 · Phase 2: T4
 
 **Done when**:
 
-- [ ] Testes: start sem ativo cria; start na mesma tarefa devolve o existente sem criar outro; start em outra tarefa finaliza o anterior; start em tarefa `done`/arquivada → `ErrNotTrackable`; stop finaliza; stop sem ativo → `ErrNoActiveTimer`; concluir e arquivar tarefa finalizam o ativo
-- [ ] Teste de concorrência: 20 goroutines chamando start ao mesmo tempo terminam com exatamente 1 ativo
-- [ ] Testes de apontamento: listagem ordenada com duração; editar valida fim > início, fim não futuro e sobreposição (incluindo a borda fim == início do vizinho, que é permitida); editar/excluir ativo → `ErrEntryActive`; excluir finalizado remove; `TotalSeconds` soma só finalizados
-- [ ] Gate quick passa; 18+ testes novos
+- [x] Testes: start sem ativo cria; start na mesma tarefa devolve o existente sem criar outro; start em outra tarefa finaliza o anterior; start em tarefa `done`/arquivada → `ErrNotTrackable`; stop finaliza; stop sem ativo → `ErrNoActiveTimer`; concluir e arquivar tarefa finalizam o ativo
+- [x] Teste de concorrência: 20 goroutines chamando start ao mesmo tempo terminam com exatamente 1 ativo
+- [x] Testes de apontamento: listagem ordenada com duração; editar valida fim > início, fim não futuro e sobreposição (incluindo a borda fim == início do vizinho, que é permitida); editar/excluir ativo → `ErrEntryActive`; excluir finalizado remove; `TotalSeconds` soma só finalizados
+- [x] Gate quick passa; 18+ testes novos
 
 **Tests**: unit
 **Gate**: quick

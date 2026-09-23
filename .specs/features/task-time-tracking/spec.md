@@ -177,14 +177,14 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | TASK-02 | P1: Cadastrar e gerenciar tarefas (AC 4–5) | Design | Implementing |
 | TASK-03 | P1: Cadastrar e gerenciar tarefas (AC 6–8) | Design | Implementing |
 | TASK-04 | P1: Cadastrar e gerenciar tarefas (AC 9) | Design | Implementing |
-| TIME-01 | P1: Cronômetro (AC 1–4) | Design | Pending |
-| TIME-02 | P1: Cronômetro (AC 5–6) | Design | Pending |
-| TIME-03 | P1: Cronômetro (AC 7) | Design | Pending |
+| TIME-01 | P1: Cronômetro (AC 1–4) | Design | Implementing |
+| TIME-02 | P1: Cronômetro (AC 5–6) | Design | Implementing |
+| TIME-03 | P1: Cronômetro (AC 7) | Design | Implementing |
 | TIME-04 | P1: Cronômetro (AC 8, 11) | Design | Pending |
 | TIME-05 | P1: Cronômetro (AC 9–10) | Design | Pending |
-| ENTRY-01 | P1: Apontamentos (AC 1–2) | Design | Pending |
-| ENTRY-02 | P1: Apontamentos (AC 3–7, 9) | Design | Pending |
-| ENTRY-03 | P1: Apontamentos (AC 8) | Design | Pending |
+| ENTRY-01 | P1: Apontamentos (AC 1–2) | Design | Implementing |
+| ENTRY-02 | P1: Apontamentos (AC 3–7, 9) | Design | Implementing |
+| ENTRY-03 | P1: Apontamentos (AC 8) | Design | Implementing |
 | ENTRY-04 | P1: Apontamentos (AC 10–11) | Design | Pending |
 | ARCH-01 | P2: Arquivar e restaurar (AC 1–4) | Design | Implementing |
 | ARCH-02 | P2: Arquivar e restaurar (AC 5–6) | Design | Implementing |
