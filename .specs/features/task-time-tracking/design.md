@@ -141,3 +141,68 @@ interface Task {
 | Roteamento | Padrões da stdlib (Go 1.22+) | Sem framework, coerente com o que já existe |
 | Paginação | `page` com 50 fixos | Spec; evita resposta ilimitada |
 | ID | UUIDv4 via `crypto/rand` local | Evita dependência nova só para gerar id |
+
+---
+
+# Fatia 2 — Cronômetro e apontamentos
+
+Escopo: histórias "Cronômetro start/stop" (P1) e "Consultar e corrigir apontamentos" (P1). Constraints: AD-002 (relógio do servidor, um cronômetro ativo), AD-007 (SQLite no volume).
+
+## Schema
+
+```sql
+CREATE TABLE IF NOT EXISTS time_entries (
+  id         TEXT PRIMARY KEY,
+  task_id    TEXT NOT NULL REFERENCES tasks(id),
+  started_at TEXT NOT NULL,
+  ended_at   TEXT,
+  active     INTEGER,            -- 1 enquanto roda, NULL quando finalizado
+  CHECK (ended_at IS NULL OR ended_at > started_at),
+  CHECK ((ended_at IS NULL) = (active IS NOT NULL))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_one_active ON time_entries(active);
+CREATE INDEX IF NOT EXISTS idx_entries_task ON time_entries(task_id, started_at DESC);
+```
+
+**Como o "um único cronômetro" é garantido (AC7):** o índice único em `active` faz o próprio banco recusar um segundo ativo, porque no SQLite valores `NULL` não colidem num índice único — vários apontamentos finalizados convivem, mas só um pode ter `active = 1`. Verificado localmente antes de escrever este design. A aplicação sozinha, checando antes de inserir, perderia a corrida entre duas requisições simultâneas.
+
+## Operações do store
+
+| Método | Comportamento |
+| ------ | ------------- |
+| `StartTimer(ctx, taskID)` | Transação: se já há ativo na mesma tarefa, devolve-o com `created=false`; se há ativo em outra, finaliza com `now` e cria o novo; recusa com `ErrNotTrackable` se a tarefa estiver `done` ou arquivada |
+| `StopTimer(ctx)` | Finaliza o ativo (`ended_at=now`, `active=NULL`); `ErrNoActiveTimer` se não houver |
+| `ActiveTimer(ctx)` | Apontamento ativo + tarefa, ou nada |
+| `ListEntries(ctx, taskID)` | Apontamentos da tarefa, `started_at` desc, com `duration_seconds` |
+| `UpdateEntry(ctx, id, started, ended)` | Valida `ended > started`, não-futuro e sem sobreposição com qualquer outro apontamento; `ErrEntryActive` se o apontamento estiver rodando |
+| `DeleteEntry(ctx, id)` | Só finalizados |
+| `TotalSeconds(taskID)` | Soma dos finalizados; alimenta o `total_seconds` que a fatia 1 já devolve como 0 |
+
+Concluir ou arquivar tarefa com cronômetro ativo finaliza o apontamento na mesma transação (P1 AC11, P2 AC2).
+
+## Rotas
+
+| Rota | Sucesso | Erros |
+| ---- | ------- | ----- |
+| `POST /api/v1/tasks/{id}/timer/start` | 201 novo, 200 se já ativo nessa tarefa | 404, 409 `TASK_NOT_TRACKABLE` |
+| `POST /api/v1/timer/stop` | 200 | 409 `NO_ACTIVE_TIMER` |
+| `GET /api/v1/timer` | 200 com apontamento+tarefa ou `null` | - |
+| `GET /api/v1/tasks/{id}/time-entries` | 200 lista | 404 |
+| `PATCH /api/v1/time-entries/{id}` | 200 | 404 `TIME_ENTRY_NOT_FOUND`, 409 `TIME_ENTRY_ACTIVE`, 422 `VALIDATION_ERROR`/`TIME_ENTRY_OVERLAP` |
+| `DELETE /api/v1/time-entries/{id}` | 204 | 404, 409 |
+
+## Frontend
+
+- `useTimer`: busca `GET /api/v1/timer` ao carregar, mantém o tempo decorrido com `setInterval` de 1s calculado a partir de `started_at` (o relógio do servidor é a fonte da verdade; o navegador só conta).
+- Barra fixa com título da tarefa e `HH:MM:SS` enquanto há cronômetro; botão parar.
+- Botão iniciar por tarefa na lista (oculto em tarefa concluída ou arquivada) e total de horas em `HH:MM`.
+- Detalhe da tarefa com os apontamentos, edição de início/fim e exclusão com confirmação.
+
+## Riscos desta fatia
+
+| Risco | Mitigação |
+| ----- | --------- |
+| Corrida entre dois `start` simultâneos | Índice único parcial (verificado) + teste de concorrência com goroutines |
+| Relógio do navegador diferente do servidor | O decorrido é calculado a partir de `started_at` do servidor; o navegador só incrementa |
+| `setInterval` vazando após desmontar | `clearInterval` no cleanup, coberto por teste |
+| Sobreposição ao editar apontamento | Validação no store, com teste para bordas exatas (fim == início do vizinho é permitido) |

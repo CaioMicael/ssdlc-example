@@ -5,6 +5,7 @@ import (
 	"errors"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func openTestStore(t *testing.T) *Store {
@@ -418,5 +419,48 @@ func TestList_DefaultLimitIsFifty(t *testing.T) {
 	}
 	if len(tasks) != 3 {
 		t.Fatalf("len(tasks) = %d, want 3 (all created tasks fit under the default limit of 50)", len(tasks))
+	}
+}
+
+// AC4 / edge case "Paginação 50": the cap must truncate a real overflowing
+// result set, not merely exist as a constant.
+func TestList_CapsAtFiftyWithMoreRows(t *testing.T) {
+	s := openTestStore(t)
+	ctx := context.Background()
+
+	for i := 0; i < 51; i++ {
+		if _, err := s.Create(ctx, "Task", ""); err != nil {
+			t.Fatalf("Create() error = %v", err)
+		}
+	}
+
+	all, err := s.List(ctx, Filter{})
+	if err != nil {
+		t.Fatalf("List() error = %v", err)
+	}
+	if len(all) != 50 {
+		t.Fatalf("len(List) = %d, want 50 (cap must truncate 51 rows)", len(all))
+	}
+}
+
+// Edge case "Fuso horário": timestamps are RFC 3339 in UTC, not a local or
+// loosely formatted string.
+func TestCreate_TimestampsAreRFC3339UTC(t *testing.T) {
+	s := openTestStore(t)
+
+	task, err := s.Create(context.Background(), "Task", "")
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+
+	for label, value := range map[string]string{"created_at": task.CreatedAt, "updated_at": task.UpdatedAt} {
+		parsed, err := time.Parse(time.RFC3339, value)
+		if err != nil {
+			t.Errorf("%s = %q, want RFC 3339: %v", label, value, err)
+			continue
+		}
+		if _, offset := parsed.Zone(); offset != 0 {
+			t.Errorf("%s = %q, want UTC (zero offset), got offset %d", label, value, offset)
+		}
 	}
 }

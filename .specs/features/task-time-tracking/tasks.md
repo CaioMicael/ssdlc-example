@@ -54,6 +54,18 @@ T1 → T2 → T3
 T4
 ```
 
+### Phase 3: Cronômetro (fatia 2)
+
+```
+T5 → T6 → T7
+```
+
+### Phase 4: Interface do cronômetro (fatia 2)
+
+```
+T8
+```
+
 ---
 
 ## Task Breakdown
@@ -175,3 +187,90 @@ Phase 1: T1 → T2 → T3 · Phase 2: T4
 | T2 | Handlers HTTP | unit | unit | ✅ OK |
 | T3 | Wiring + Dockerfile/workflow | unit (wiring) | unit | ✅ OK |
 | T4 | React | unit | unit | ✅ OK |
+
+
+---
+
+### Phase 3: Cronômetro (fatia 2)
+
+#### T5: Store de apontamentos
+
+**What**: Tabela `time_entries` com índice único parcial em `active`, mais `StartTimer`, `StopTimer`, `ActiveTimer`, `ListEntries`, `UpdateEntry`, `DeleteEntry` e `TotalSeconds`; concluir/arquivar tarefa finaliza o ativo na mesma transação.
+**Where**: `backend/internal/store/timer.go`
+**Depends on**: None
+**Reuses**: `Open`, migração e erros tipados do store da fatia 1
+**Requirement**: TIME-01, TIME-02, TIME-03, ENTRY-01, ENTRY-02, ENTRY-03
+**Tools**: Skill `golang-pro`
+
+**Done when**:
+
+- [ ] Testes: start sem ativo cria; start na mesma tarefa devolve o existente sem criar outro; start em outra tarefa finaliza o anterior; start em tarefa `done`/arquivada → `ErrNotTrackable`; stop finaliza; stop sem ativo → `ErrNoActiveTimer`; concluir e arquivar tarefa finalizam o ativo
+- [ ] Teste de concorrência: 20 goroutines chamando start ao mesmo tempo terminam com exatamente 1 ativo
+- [ ] Testes de apontamento: listagem ordenada com duração; editar valida fim > início, fim não futuro e sobreposição (incluindo a borda fim == início do vizinho, que é permitida); editar/excluir ativo → `ErrEntryActive`; excluir finalizado remove; `TotalSeconds` soma só finalizados
+- [ ] Gate quick passa; 18+ testes novos
+
+**Tests**: unit
+**Gate**: quick
+**Commit**: `feat(backend): add time entry store with single active timer`
+
+---
+
+#### T6: Rotas do cronômetro
+
+**What**: `POST /api/v1/tasks/{id}/timer/start`, `POST /api/v1/timer/stop`, `GET /api/v1/timer`, e `total_seconds` real na resposta de tarefa.
+**Where**: `backend/internal/httpapi/timer.go`
+**Depends on**: T5
+**Reuses**: handlers e formato de erro da fatia 1
+**Requirement**: TIME-01, TIME-02, TIME-04
+**Tools**: Skill `golang-pro`
+
+**Done when**:
+
+- [ ] Testes: start 201; start repetido na mesma tarefa 200 sem duplicar; start após ativo em outra tarefa finaliza o anterior; tarefa `done`/arquivada → 409 `TASK_NOT_TRACKABLE`; id inexistente → 404; stop 200; stop sem ativo → 409 `NO_ACTIVE_TIMER`; `GET /api/v1/timer` com e sem ativo; `total_seconds` reflete a soma
+- [ ] Gate quick passa; 10+ testes novos
+
+**Tests**: unit
+**Gate**: quick
+**Commit**: `feat(backend): add timer endpoints`
+
+---
+
+#### T7: Rotas de apontamentos
+
+**What**: `GET /api/v1/tasks/{id}/time-entries`, `PATCH /api/v1/time-entries/{id}` e `DELETE /api/v1/time-entries/{id}`.
+**Where**: `backend/internal/httpapi/entries.go`
+**Depends on**: T6
+**Reuses**: mapeamento de erros da fatia 1
+**Requirement**: ENTRY-01, ENTRY-02, ENTRY-03
+**Tools**: Skill `golang-pro`
+
+**Done when**:
+
+- [ ] Testes: listagem 200 com `duration_seconds`; patch 200 recalculando duração; fim <= início → 422; fim futuro → 422; sobreposição → 422 `TIME_ENTRY_OVERLAP`; apontamento ativo → 409 `TIME_ENTRY_ACTIVE`; inexistente → 404 `TIME_ENTRY_NOT_FOUND`; delete 204
+- [ ] Gate quick passa; 9+ testes novos
+
+**Tests**: unit
+**Gate**: quick
+**Commit**: `feat(backend): add time entry endpoints`
+
+---
+
+### Phase 4: Interface do cronômetro (fatia 2)
+
+#### T8: Cronômetro e horas na tela
+
+**What**: `useTimer` com contagem de 1s a partir de `started_at`, barra do cronômetro ativo com botão parar, botão iniciar por tarefa, total em `HH:MM` e lista de apontamentos com edição e exclusão confirmada.
+**Where**: `frontend/src/useTimer.ts`
+**Depends on**: T7
+**Reuses**: `api/tasks.ts`, padrão de `useTasks`
+**Requirement**: TIME-05, ENTRY-04
+**Tools**: Skill `react`
+
+**Done when**:
+
+- [ ] Testes com timers falsos: exibe `HH:MM:SS` e avança 1s; restaura o ativo no carregamento via `GET /api/v1/timer`; iniciar chama a rota e mostra a barra; parar some com a barra; botão iniciar ausente em tarefa concluída/arquivada; total em `HH:MM`; excluir apontamento pede confirmação; `clearInterval` no desmonte
+- [ ] Gate quick-fe passa; 8+ testes novos
+
+**Tests**: unit
+**Gate**: quick-fe
+**Commit**: `feat(frontend): add timer bar and time entries`
