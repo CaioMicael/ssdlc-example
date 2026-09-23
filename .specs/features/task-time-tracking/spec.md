@@ -4,6 +4,15 @@
 
 O usuário precisa registrar suas tarefas e saber quanto tempo gastou em cada uma. Hoje não existe sistema; o objetivo é uma API Go + SPA React/TypeScript onde ele cadastra tarefas, acompanha o status e aponta horas com um cronômetro start/stop, sem precisar calcular tempo manualmente.
 
+**Fatiamento de entrega (pedido do usuário: simples primeiro):**
+
+| Fatia | Conteúdo | Estado |
+| ----- | -------- | ------ |
+| 1 | CRUD de tarefas (criar, listar, editar, status), arquivar/restaurar, persistência SQLite | em desenvolvimento |
+| 2 | Cronômetro start/stop, apontamentos e total de horas | planejada |
+
+As histórias abaixo valem para a feature inteira; a fatia 1 entrega as histórias "Cadastrar e gerenciar tarefas" e "Arquivar e restaurar tarefas".
+
 ## Goals
 
 - [ ] Usuário cria uma tarefa e inicia o cronômetro nela em no máximo 3 cliques a partir da tela inicial.
@@ -48,7 +57,9 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Limites de campos | Título 1–200 caracteres (após trim); descrição 0–2000 caracteres | Limites usuais que evitam payload abusivo | n |
 | Fuso horário | API armazena e retorna UTC (RFC 3339); frontend exibe no fuso do navegador | Padrão sem ambiguidade | n |
 | Paginação da lista de tarefas | 50 por página, parâmetro `page` | Lista de usuário único é pequena; limite evita resposta ilimitada | n |
-| Banco de dados na AWS | Esta feature provisiona o banco: sem acesso público, criptografado, backup automático de 7 dias, credencial via gerenciador de segredos | Movido do delivery-pipeline, que entrega só o esqueleto sem persistência | n |
+| Persistência | SQLite em arquivo (`/data/app.db`) num volume Docker da EC2, criado/migrado pela própria API no start | Escolha do usuário: mais simples possível sem perder os dados em deploy/reboot; o Learner Lab nega `rds:CreateDBInstance` para instâncias genéricas | y |
+| Concorrência no SQLite | Modo WAL e `busy_timeout` de 5s; uma única instância da API | Usuário único e uma EC2; evita `database is locked` sem introduzir um servidor de banco | n |
+| Backup do banco | Nenhum | Trabalho acadêmico; perder os dados é aceitável | n |
 | Idioma | UI em pt-BR; códigos de erro da API em inglês (`TASK_NOT_FOUND`) | Códigos estáveis para o código; textos para o usuário | n |
 
 **Open questions:** none - all resolved or logged above (required before the spec is confirmed).
@@ -162,10 +173,10 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| TASK-01 | P1: Cadastrar e gerenciar tarefas (AC 1–3) | Design | Pending |
-| TASK-02 | P1: Cadastrar e gerenciar tarefas (AC 4–5) | Design | Pending |
-| TASK-03 | P1: Cadastrar e gerenciar tarefas (AC 6–8) | Design | Pending |
-| TASK-04 | P1: Cadastrar e gerenciar tarefas (AC 9) | Design | Pending |
+| TASK-01 | P1: Cadastrar e gerenciar tarefas (AC 1–3) | Design | Implementing |
+| TASK-02 | P1: Cadastrar e gerenciar tarefas (AC 4–5) | Design | Implementing |
+| TASK-03 | P1: Cadastrar e gerenciar tarefas (AC 6–8) | Design | Implementing |
+| TASK-04 | P1: Cadastrar e gerenciar tarefas (AC 9) | Design | Implementing |
 | TIME-01 | P1: Cronômetro (AC 1–4) | Design | Pending |
 | TIME-02 | P1: Cronômetro (AC 5–6) | Design | Pending |
 | TIME-03 | P1: Cronômetro (AC 7) | Design | Pending |
@@ -175,11 +186,11 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | ENTRY-02 | P1: Apontamentos (AC 3–7, 9) | Design | Pending |
 | ENTRY-03 | P1: Apontamentos (AC 8) | Design | Pending |
 | ENTRY-04 | P1: Apontamentos (AC 10–11) | Design | Pending |
-| ARCH-01 | P2: Arquivar e restaurar (AC 1–4) | Design | Pending |
-| ARCH-02 | P2: Arquivar e restaurar (AC 5–6) | Design | Pending |
-| API-01 | Edge Cases: formato de erro, JSON inválido, payload, UUID | Design | Pending |
+| ARCH-01 | P2: Arquivar e restaurar (AC 1–4) | Design | Implementing |
+| ARCH-02 | P2: Arquivar e restaurar (AC 5–6) | Design | Implementing |
+| API-01 | Edge Cases: formato de erro, JSON inválido, payload, UUID | Design | Implementing |
 | API-02 | Edge Cases: rate limit, CORS | Design | Pending |
-| API-03 | Edge Cases: 503/500, healthz, logs | Design | Pending |
+| API-03 | Edge Cases: 503/500, healthz, logs | Design | Implementing |
 | API-04 | Edge Cases: erro de rede no frontend | Design | Pending |
 
 **Coverage:** 19 total, 0 mapped to tasks, 19 unmapped ⚠️ (esperado antes de Tasks)

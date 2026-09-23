@@ -68,7 +68,7 @@ jobs:
             --instance-ids "${{ vars.APP_INSTANCE_ID }}" \
             --document-name "AWS-RunShellScript" \
             --comment "deploy ${SHA}" \
-            --parameters commands="docker pull ${IMAGE} && (docker rm -f app || true) && docker run -d --name app --restart unless-stopped -p 80:8080 ${IMAGE}" \
+            --parameters commands="docker pull ${IMAGE} && (docker rm -f app || true) && docker run -d --name app --restart unless-stopped -p 80:8080 -v ssdlc_data:/data -e DB_PATH=/data/app.db ${IMAGE}" \
             --query "Command.CommandId" \
             --output text)
           echo "Command ID: ${COMMAND_ID}"

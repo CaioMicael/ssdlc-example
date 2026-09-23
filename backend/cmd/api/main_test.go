@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/CaioMicael/ssdlc-example/backend/internal/store"
 )
 
 func getenvFunc(values map[string]string) func(string) string {
@@ -42,7 +44,7 @@ func TestRun_DefaultPort_ListensOn8080(t *testing.T) {
 	ready := make(chan string, 1)
 	errCh := make(chan error, 1)
 	go func() {
-		errCh <- run(ctx, getenvFunc(map[string]string{"WEB_DIR": t.TempDir()}), ready)
+		errCh <- run(ctx, getenvFunc(map[string]string{"WEB_DIR": t.TempDir(), "DB_PATH": filepath.Join(t.TempDir(), "app.db")}), ready)
 	}()
 
 	var addr string
@@ -76,7 +78,7 @@ func TestRun_CustomPort_UsesGivenPort(t *testing.T) {
 	ready := make(chan string, 1)
 	errCh := make(chan error, 1)
 	go func() {
-		errCh <- run(ctx, getenvFunc(map[string]string{"PORT": wantPort, "WEB_DIR": t.TempDir()}), ready)
+		errCh <- run(ctx, getenvFunc(map[string]string{"PORT": wantPort, "WEB_DIR": t.TempDir(), "DB_PATH": filepath.Join(t.TempDir(), "app.db")}), ready)
 	}()
 
 	var addr string
@@ -125,7 +127,7 @@ func TestRun_GracefulShutdown_WaitsForInFlightRequest(t *testing.T) {
 	ready := make(chan string, 1)
 	errCh := make(chan error, 1)
 	go func() {
-		errCh <- run(ctx, getenvFunc(map[string]string{"PORT": "0", "WEB_DIR": webDir}), ready)
+		errCh <- run(ctx, getenvFunc(map[string]string{"PORT": "0", "WEB_DIR": webDir, "DB_PATH": filepath.Join(t.TempDir(), "app.db")}), ready)
 	}()
 
 	var addr string
@@ -192,5 +194,139 @@ func TestRun_GracefulShutdown_WaitsForInFlightRequest(t *testing.T) {
 	if dialErr == nil {
 		_ = conn.Close()
 		t.Fatalf("connection to %q succeeded after run returned, want refused (listener still open)", addr)
+	}
+}
+
+// startRun runs the server with values in the background and waits for it
+// to become ready, returning its address and a func to stop it.
+func startRun(t *testing.T, values map[string]string) (addr string, stop func()) {
+	t.Helper()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	ready := make(chan string, 1)
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- run(ctx, getenvFunc(values), ready)
+	}()
+
+	select {
+	case addr = <-ready:
+	case <-time.After(2 * time.Second):
+		cancel()
+		t.Fatal("server did not become ready")
+	}
+	addr = strings.Replace(addr, "[::]", "127.0.0.1", 1)
+	addr = strings.Replace(addr, "0.0.0.0", "127.0.0.1", 1)
+
+	return addr, func() {
+		cancel()
+		select {
+		case err := <-errCh:
+			if err != nil {
+				t.Fatalf("run returned error: %v", err)
+			}
+		case <-time.After(10 * time.Second):
+			t.Fatal("run did not return within 10s after cancel")
+		}
+	}
+}
+
+// AC (T3, wiring): a custom DB_PATH is the file run actually opens and
+// writes to on startup.
+func TestRun_CustomDBPath_CreatesFileAtGivenPath(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "custom.db")
+
+	_, stop := startRun(t, map[string]string{
+		"PORT": "0", "WEB_DIR": t.TempDir(), "DB_PATH": dbPath,
+	})
+	defer stop()
+
+	if _, err := os.Stat(dbPath); err != nil {
+		t.Fatalf("expected db file at %q to exist after startup, stat error: %v", dbPath, err)
+	}
+}
+
+// AC (T3, wiring): DB_PATH unset resolves to "./app.db" (relative to the
+// process's working directory). Run in a temp working directory so the
+// resolved default never litters the repo.
+func TestRun_DefaultDBPath_IsAppDbInWorkingDirectory(t *testing.T) {
+	workDir := t.TempDir()
+	origWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(workDir); err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := os.Chdir(origWD); err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	_, stop := startRun(t, map[string]string{"PORT": "0", "WEB_DIR": t.TempDir()})
+	defer stop()
+
+	wantPath := filepath.Join(workDir, "app.db")
+	if _, err := os.Stat(wantPath); err != nil {
+		t.Fatalf("expected default db file at %q to exist after startup, stat error: %v", wantPath, err)
+	}
+}
+
+// AC (T3, edge case): /healthz responds 200 with {"status":"ok"} when the
+// database is reachable.
+func TestHealthz_HealthyStore_Returns200(t *testing.T) {
+	addr, stop := startRun(t, map[string]string{
+		"PORT": "0", "WEB_DIR": t.TempDir(), "DB_PATH": filepath.Join(t.TempDir(), "app.db"),
+	})
+	defer stop()
+
+	resp, err := http.Get("http://" + addr + "/healthz")
+	if err != nil {
+		t.Fatalf("GET /healthz: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d, want 200", resp.StatusCode)
+	}
+	if string(body) != `{"status":"ok"}` {
+		t.Fatalf("body = %q, want %q", body, `{"status":"ok"}`)
+	}
+}
+
+// AC (T3, edge case): /healthz responds 503 with the spec error code
+// SERVICE_UNAVAILABLE when the database is unavailable. The onStoreOpened
+// hook closes the store right after startup, simulating an outage while the
+// server keeps serving requests.
+func TestHealthz_StoreUnavailable_Returns503(t *testing.T) {
+	original := onStoreOpened
+	onStoreOpened = func(s *store.Store) { _ = s.Close() }
+	defer func() { onStoreOpened = original }()
+
+	addr, stop := startRun(t, map[string]string{
+		"PORT": "0", "WEB_DIR": t.TempDir(), "DB_PATH": filepath.Join(t.TempDir(), "app.db"),
+	})
+	defer stop()
+
+	resp, err := http.Get("http://" + addr + "/healthz")
+	if err != nil {
+		t.Fatalf("GET /healthz: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if resp.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("status = %d, want 503", resp.StatusCode)
+	}
+	if !strings.Contains(string(body), `"code":"SERVICE_UNAVAILABLE"`) {
+		t.Fatalf("body = %q, want it to contain SERVICE_UNAVAILABLE code", body)
 	}
 }

@@ -11,11 +11,13 @@ COPY backend/go.mod backend/go.sum* ./
 RUN go mod download
 COPY backend/ ./
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/api ./cmd/api
+RUN mkdir -p /data
 
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=api /out/api /app/api
 COPY --from=web /src/dist /web
-ENV PORT=8080 WEB_DIR=/web
+COPY --from=api --chown=nonroot:nonroot /data /data
+ENV PORT=8080 WEB_DIR=/web DB_PATH=/data/app.db
 EXPOSE 8080
 USER nonroot:nonroot
 ENTRYPOINT ["/app/api"]

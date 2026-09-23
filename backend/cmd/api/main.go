@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/CaioMicael/ssdlc-example/backend/internal/httpapi"
+	"github.com/CaioMicael/ssdlc-example/backend/internal/store"
 )
 
 const shutdownTimeout = 10 * time.Second
@@ -21,6 +22,13 @@ const shutdownTimeout = 10 * time.Second
 // the router without changing production behavior. Production never
 // overrides it.
 var wrapHandler = func(h http.Handler) http.Handler { return h }
+
+// onStoreOpened lets tests observe the store instance run opens right after
+// a successful store.Open, e.g. to close it and simulate a database outage
+// while the server is running. Production never overrides it.
+var onStoreOpened = func(*store.Store) {
+	// Intentionally empty: production needs no hook; tests override it.
+}
 
 // run starts the HTTP server and blocks until ctx is canceled, then shuts it
 // down gracefully (waiting up to shutdownTimeout for in-flight requests).
@@ -39,12 +47,24 @@ func run(ctx context.Context, getenv func(string) string, ready chan<- string) e
 		webDir = "./web"
 	}
 
+	dbPath := getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "./app.db"
+	}
+	logger.Info("opening database", "db_path", dbPath)
+	st, err := store.Open(dbPath)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = st.Close() }()
+	onStoreOpened(st)
+
 	ln, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		return err
 	}
 
-	handler := wrapHandler(httpapi.NewRouter(webDir))
+	handler := wrapHandler(httpapi.NewRouter(webDir, st))
 	srv := &http.Server{Handler: handler}
 
 	serveErr := make(chan error, 1)
