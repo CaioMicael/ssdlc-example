@@ -71,9 +71,9 @@ T4
 
 **Done when**:
 
-- [ ] Driver Go puro (`modernc.org/sqlite`); build com `CGO_ENABLED=0` funciona
-- [ ] Testes: criar com defaults (`todo`, `archived=false`); título vazio/>200 e descrição >2000 → `ErrValidation`; listar ordenado por `updated_at` desc; filtro por status e por arquivadas; `Get` inexistente → `ErrNotFound`; `Update` parcial altera só o enviado e mexe em `updated_at`; status inválido → `ErrValidation`; editar arquivada → `ErrArchived`; arquivar e restaurar preservam os campos
-- [ ] Gate quick passa; 12+ testes
+- [x] Driver Go puro (`modernc.org/sqlite`); build com `CGO_ENABLED=0` funciona
+- [x] Testes: criar com defaults (`todo`, `archived=false`); título vazio/>200 e descrição >2000 → `ErrValidation`; listar ordenado por `updated_at` desc; filtro por status e por arquivadas; `Get` inexistente → `ErrNotFound`; `Update` parcial altera só o enviado e mexe em `updated_at`; status inválido → `ErrValidation`; editar arquivada → `ErrArchived`; arquivar e restaurar preservam os campos
+- [x] Gate quick passa; 12+ testes
 
 **Tests**: unit
 **Gate**: quick

@@ -173,9 +173,9 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| TASK-01 | P1: Cadastrar e gerenciar tarefas (AC 1–3) | Design | Pending |
-| TASK-02 | P1: Cadastrar e gerenciar tarefas (AC 4–5) | Design | Pending |
-| TASK-03 | P1: Cadastrar e gerenciar tarefas (AC 6–8) | Design | Pending |
+| TASK-01 | P1: Cadastrar e gerenciar tarefas (AC 1–3) | Design | Implementing |
+| TASK-02 | P1: Cadastrar e gerenciar tarefas (AC 4–5) | Design | Implementing |
+| TASK-03 | P1: Cadastrar e gerenciar tarefas (AC 6–8) | Design | Implementing |
 | TASK-04 | P1: Cadastrar e gerenciar tarefas (AC 9) | Design | Pending |
 | TIME-01 | P1: Cronômetro (AC 1–4) | Design | Pending |
 | TIME-02 | P1: Cronômetro (AC 5–6) | Design | Pending |
