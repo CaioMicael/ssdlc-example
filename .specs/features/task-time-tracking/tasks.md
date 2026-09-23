@@ -268,8 +268,8 @@ Phase 1: T1 → T2 → T3 · Phase 2: T4
 
 **Done when**:
 
-- [ ] Testes com timers falsos: exibe `HH:MM:SS` e avança 1s; restaura o ativo no carregamento via `GET /api/v1/timer`; iniciar chama a rota e mostra a barra; parar some com a barra; botão iniciar ausente em tarefa concluída/arquivada; total em `HH:MM`; excluir apontamento pede confirmação; `clearInterval` no desmonte
-- [ ] Gate quick-fe passa; 8+ testes novos
+- [x] Testes com timers falsos: exibe `HH:MM:SS` e avança 1s; restaura o ativo no carregamento via `GET /api/v1/timer`; iniciar chama a rota e mostra a barra; parar some com a barra; botão iniciar ausente em tarefa concluída/arquivada; total em `HH:MM`; excluir apontamento pede confirmação; `clearInterval` no desmonte
+- [x] Gate quick-fe passa; 8+ testes novos
 
 **Tests**: unit
 **Gate**: quick-fe
