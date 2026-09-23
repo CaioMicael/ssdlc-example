@@ -246,8 +246,8 @@ Phase 1: T1 → T2 → T3 · Phase 2: T4
 
 **Done when**:
 
-- [ ] Testes: listagem 200 com `duration_seconds`; patch 200 recalculando duração; fim <= início → 422; fim futuro → 422; sobreposição → 422 `TIME_ENTRY_OVERLAP`; apontamento ativo → 409 `TIME_ENTRY_ACTIVE`; inexistente → 404 `TIME_ENTRY_NOT_FOUND`; delete 204
-- [ ] Gate quick passa; 9+ testes novos
+- [x] Testes: listagem 200 com `duration_seconds`; patch 200 recalculando duração; fim <= início → 422; fim futuro → 422; sobreposição → 422 `TIME_ENTRY_OVERLAP`; apontamento ativo → 409 `TIME_ENTRY_ACTIVE`; inexistente → 404 `TIME_ENTRY_NOT_FOUND`; delete 204
+- [x] Gate quick passa; 9+ testes novos
 
 **Tests**: unit
 **Gate**: quick

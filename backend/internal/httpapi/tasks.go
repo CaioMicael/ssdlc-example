@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/CaioMicael/ssdlc-example/backend/internal/store"
 )
@@ -33,6 +34,9 @@ type TaskStore interface {
 	StopTimer(ctx context.Context) (store.TimeEntry, error)
 	ActiveTimer(ctx context.Context) (store.TimeEntry, store.Task, bool, error)
 	TotalSeconds(ctx context.Context, taskID string) (int64, error)
+	ListEntries(ctx context.Context, taskID string) ([]store.TimeEntry, error)
+	UpdateEntry(ctx context.Context, id string, startedAt, endedAt *time.Time) (store.TimeEntry, error)
+	DeleteEntry(ctx context.Context, id string) error
 }
 
 // taskResponse is the JSON shape returned for a single task.
@@ -274,6 +278,12 @@ func writeStoreError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusConflict, "TASK_NOT_TRACKABLE", "task is not trackable", nil)
 	case errors.Is(err, store.ErrNoActiveTimer):
 		writeError(w, http.StatusConflict, "NO_ACTIVE_TIMER", "no active timer", nil)
+	case errors.Is(err, store.ErrEntryNotFound):
+		writeError(w, http.StatusNotFound, "TIME_ENTRY_NOT_FOUND", "time entry not found", nil)
+	case errors.Is(err, store.ErrEntryActive):
+		writeError(w, http.StatusConflict, "TIME_ENTRY_ACTIVE", "time entry is active", nil)
+	case errors.Is(err, store.ErrEntryOverlap):
+		writeError(w, http.StatusUnprocessableEntity, "TIME_ENTRY_OVERLAP", "time entry overlaps another entry", nil)
 	default:
 		slog.Error("unexpected store error", "error", err)
 		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "internal server error", nil)

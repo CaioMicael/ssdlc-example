@@ -22,6 +22,7 @@ func NewRouter(webDir string, s TaskStore) http.Handler {
 
 	registerTaskRoutes(mux, s)
 	registerTimerRoutes(mux, s)
+	registerEntryRoutes(mux, s)
 
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
