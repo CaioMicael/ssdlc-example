@@ -138,9 +138,9 @@ T4
 
 **Done when**:
 
-- [ ] Testes com `fetch` mockado: lista renderiza tarefas; criar adiciona à lista; 422 mostra a mensagem no campo e preserva o que foi digitado; mudar status chama o PATCH e reflete na tela; arquivar remove da lista padrão; estado vazio tem mensagem própria
-- [ ] Gate quick-fe passa; 6+ testes novos
-- [ ] "API online" e o título continuam funcionando (testes existentes intactos)
+- [x] Testes com `fetch` mockado: lista renderiza tarefas; criar adiciona à lista; 422 mostra a mensagem no campo e preserva o que foi digitado; mudar status chama o PATCH e reflete na tela; arquivar remove da lista padrão; estado vazio tem mensagem própria
+- [x] Gate quick-fe passa; 6+ testes novos
+- [x] "API online" e o título continuam funcionando (testes existentes intactos)
 
 **Tests**: unit
 **Gate**: quick-fe
