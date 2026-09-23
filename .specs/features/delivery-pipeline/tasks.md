@@ -228,7 +228,7 @@ T8
 
 **Done when**:
 
-- [ ] `bash -n` e actionlint passam
+- [x] `bash -n` e actionlint passam
 - [ ] `gh run watch --exit-status` do `deploy` verde
 - [ ] `curl -fsS http://<ip-app>/healthz` → `{"status":"ok"}`; `/` mostra "SSDLC Example"
 
