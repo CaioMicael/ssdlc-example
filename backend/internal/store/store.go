@@ -220,7 +220,7 @@ func (s *Store) List(ctx context.Context, filter Filter) ([]Task, error) {
 	if err != nil {
 		return nil, fmt.Errorf("list tasks: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	tasks := make([]Task, 0)
 	for rows.Next() {

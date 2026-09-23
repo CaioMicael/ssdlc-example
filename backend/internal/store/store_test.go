@@ -365,13 +365,10 @@ func TestList_RespectsLimitAndOffset(t *testing.T) {
 	s := openTestStore(t)
 	ctx := context.Background()
 
-	var created []Task
 	for i := 0; i < 5; i++ {
-		task, err := s.Create(ctx, "Task", "")
-		if err != nil {
+		if _, err := s.Create(ctx, "Task", ""); err != nil {
 			t.Fatalf("Create() error = %v", err)
 		}
-		created = append(created, task)
 	}
 
 	page1, err := s.List(ctx, Filter{Limit: 2, Offset: 0})
@@ -392,6 +389,15 @@ func TestList_RespectsLimitAndOffset(t *testing.T) {
 
 	if page1[0].ID == page2[0].ID || page1[1].ID == page2[0].ID {
 		t.Error("page1 and page2 overlap, want distinct pages given the offset")
+	}
+
+	// The last page of 5 tasks with limit 2 holds the single remaining task.
+	page3, err := s.List(ctx, Filter{Limit: 2, Offset: 4})
+	if err != nil {
+		t.Fatalf("List() error = %v", err)
+	}
+	if len(page3) != 1 {
+		t.Fatalf("len(page3) = %d, want 1", len(page3))
 	}
 }
 
