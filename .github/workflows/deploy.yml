@@ -1,0 +1,119 @@
+name: deploy
+
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        id: image
+        env:
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          OWNER="$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')"
+          IMAGE="ghcr.io/${OWNER}/ssdlc-example"
+          docker build -t "${IMAGE}:${SHA}" -t "${IMAGE}:latest" .
+          docker push "${IMAGE}:${SHA}"
+          docker push "${IMAGE}:latest"
+          echo "image=${IMAGE}:${SHA}" >> "$GITHUB_OUTPUT"
+
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Verify AWS credentials
+        run: |
+          if ! aws sts get-caller-identity >/dev/null 2>&1; then
+            echo "Credenciais AWS inválidas ou expiradas: rode scripts/refresh-aws-secrets.sh"
+            exit 1
+          fi
+
+      - name: Deploy via SSM
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "${{ vars.APP_INSTANCE_ID }}" \
+            --document-name "AWS-RunShellScript" \
+            --comment "deploy ${SHA}" \
+            --parameters commands="docker pull ${IMAGE} && (docker rm -f app || true) && docker run -d --name app --restart unless-stopped -p 80:8080 ${IMAGE}" \
+            --query "Command.CommandId" \
+            --output text)
+          echo "Command ID: ${COMMAND_ID}"
+
+          set +e
+          aws ssm wait command-executed \
+            --command-id "${COMMAND_ID}" \
+            --instance-id "${{ vars.APP_INSTANCE_ID }}"
+          set -e
+
+          STATUS=$(aws ssm get-command-invocation \
+            --command-id "${COMMAND_ID}" \
+            --instance-id "${{ vars.APP_INSTANCE_ID }}" \
+            --query "Status" \
+            --output text)
+
+          echo "--- stdout ---"
+          aws ssm get-command-invocation \
+            --command-id "${COMMAND_ID}" \
+            --instance-id "${{ vars.APP_INSTANCE_ID }}" \
+            --query "StandardOutputContent" \
+            --output text
+          echo "--- stderr ---"
+          aws ssm get-command-invocation \
+            --command-id "${COMMAND_ID}" \
+            --instance-id "${{ vars.APP_INSTANCE_ID }}" \
+            --query "StandardErrorContent" \
+            --output text
+
+          if [ "${STATUS}" != "Success" ]; then
+            echo "Comando SSM terminou com status ${STATUS}"
+            exit 1
+          fi
+
+      - name: Smoke test
+        run: |
+          set -euo pipefail
+          DEADLINE=$((SECONDS + 180))
+          BODY=""
+          while [ "${SECONDS}" -lt "${DEADLINE}" ]; do
+            if BODY=$(curl -fsS "${{ vars.APP_URL }}/healthz" 2>/dev/null) && [ "${BODY}" = '{"status":"ok"}' ]; then
+              echo "Smoke test ok: ${BODY}"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Smoke test falhou. Última resposta: ${BODY}"
+          exit 1
