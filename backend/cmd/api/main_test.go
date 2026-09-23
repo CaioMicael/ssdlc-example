@@ -183,4 +183,14 @@ func TestRun_GracefulShutdown_WaitsForInFlightRequest(t *testing.T) {
 	if res.status != http.StatusOK {
 		t.Fatalf("in-flight request status = %d, want 200", res.status)
 	}
+
+	// AC5 core guarantee: the server actually "shuts down" - the listener
+	// must be closed once run returns, so a new connection to the same
+	// address is refused. If Shutdown were skipped (leaving the listener
+	// open), this dial would still succeed and this assertion would catch it.
+	conn, dialErr := net.DialTimeout("tcp", addr, 1*time.Second)
+	if dialErr == nil {
+		_ = conn.Close()
+		t.Fatalf("connection to %q succeeded after run returned, want refused (listener still open)", addr)
+	}
 }
