@@ -176,7 +176,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | TASK-01 | P1: Cadastrar e gerenciar tarefas (AC 1–3) | Design | Pending |
 | TASK-02 | P1: Cadastrar e gerenciar tarefas (AC 4–5) | Design | Pending |
 | TASK-03 | P1: Cadastrar e gerenciar tarefas (AC 6–8) | Design | Pending |
-| TASK-04 | P1: Cadastrar e gerenciar tarefas (AC 9) | Design | Pending |
+| TASK-04 | P1: Cadastrar e gerenciar tarefas (AC 9) | Design | Implementing |
 | TIME-01 | P1: Cronômetro (AC 1–4) | Design | Pending |
 | TIME-02 | P1: Cronômetro (AC 5–6) | Design | Pending |
 | TIME-03 | P1: Cronômetro (AC 7) | Design | Pending |
