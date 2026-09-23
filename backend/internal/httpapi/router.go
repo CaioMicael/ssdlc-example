@@ -10,14 +10,17 @@ import (
 // NewRouter builds the HTTP handler for the API and static frontend.
 //
 // - GET /healthz is handled by HealthHandler.
-// - Any path under /api/ returns 404 (no API routes exist yet).
+// - The task CRUD and archive/restore routes are registered against s.
+// - Any other path under /api/ returns 404 (no matching API route).
 // - Any other GET path serves the matching file under webDir when it exists
 //   and is not a directory; otherwise it falls back to webDir/index.html
 //   (SPA fallback), always with a 200 response.
-func NewRouter(webDir string) http.Handler {
+func NewRouter(webDir string, s TaskStore) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/healthz", HealthHandler)
+
+	registerTaskRoutes(mux, s)
 
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)

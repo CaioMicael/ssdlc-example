@@ -92,10 +92,10 @@ T4
 
 **Done when**:
 
-- [ ] Testes por rota: 201 com corpo da tarefa; 200 na listagem com filtros; 200 no patch; 200 em archive/restore; 422 com `fields` em título inválido e status inválido; 404 `TASK_NOT_FOUND`; 409 `TASK_ARCHIVED`; 400 `INVALID_JSON`; 413 acima de 1 MB
-- [ ] Rotas antigas intactas: `/healthz`, 404 em `/api/` desconhecido, fallback SPA
-- [ ] Gate quick passa; 14+ testes novos
-- [ ] Nenhum teste existente enfraquecido ou removido
+- [x] Testes por rota: 201 com corpo da tarefa; 200 na listagem com filtros; 200 no patch; 200 em archive/restore; 422 com `fields` em título inválido e status inválido; 404 `TASK_NOT_FOUND`; 409 `TASK_ARCHIVED`; 400 `INVALID_JSON`; 413 acima de 1 MB
+- [x] Rotas antigas intactas: `/healthz`, 404 em `/api/` desconhecido, fallback SPA
+- [x] Gate quick passa; 14+ testes novos
+- [x] Nenhum teste existente enfraquecido ou removido
 
 **Tests**: unit
 **Gate**: quick

@@ -186,9 +186,9 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | ENTRY-02 | P1: Apontamentos (AC 3–7, 9) | Design | Pending |
 | ENTRY-03 | P1: Apontamentos (AC 8) | Design | Pending |
 | ENTRY-04 | P1: Apontamentos (AC 10–11) | Design | Pending |
-| ARCH-01 | P2: Arquivar e restaurar (AC 1–4) | Design | Pending |
-| ARCH-02 | P2: Arquivar e restaurar (AC 5–6) | Design | Pending |
-| API-01 | Edge Cases: formato de erro, JSON inválido, payload, UUID | Design | Pending |
+| ARCH-01 | P2: Arquivar e restaurar (AC 1–4) | Design | Implementing |
+| ARCH-02 | P2: Arquivar e restaurar (AC 5–6) | Design | Implementing |
+| API-01 | Edge Cases: formato de erro, JSON inválido, payload, UUID | Design | Implementing |
 | API-02 | Edge Cases: rate limit, CORS | Design | Pending |
 | API-03 | Edge Cases: 503/500, healthz, logs | Design | Pending |
 | API-04 | Edge Cases: erro de rede no frontend | Design | Pending |

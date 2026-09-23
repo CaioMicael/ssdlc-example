@@ -9,10 +9,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
 	"github.com/CaioMicael/ssdlc-example/backend/internal/httpapi"
+	"github.com/CaioMicael/ssdlc-example/backend/internal/store"
 )
 
 const shutdownTimeout = 10 * time.Second
@@ -39,12 +41,27 @@ func run(ctx context.Context, getenv func(string) string, ready chan<- string) e
 		webDir = "./web"
 	}
 
+	// SPEC_DEVIATION: DB_PATH wiring, the /healthz DB check, and the
+	// production default path are T3's scope (design.md "Wiring, volume e
+	// deploy"). This task only needs NewRouter's new signature to compile;
+	// defaulting to the OS temp dir (instead of "./app.db") avoids leaving
+	// a stray database file in the repo when running `go test`.
+	dbPath := getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = filepath.Join(os.TempDir(), "ssdlc-example.db")
+	}
+	st, err := store.Open(dbPath)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = st.Close() }()
+
 	ln, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		return err
 	}
 
-	handler := wrapHandler(httpapi.NewRouter(webDir))
+	handler := wrapHandler(httpapi.NewRouter(webDir, st))
 	srv := &http.Server{Handler: handler}
 
 	serveErr := make(chan error, 1)

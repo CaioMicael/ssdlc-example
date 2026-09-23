@@ -20,7 +20,7 @@ func TestRouter_ApiPathReturns404(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	router := NewRouter(webDir)
+	router := NewRouter(webDir, newTestStore(t))
 
 	req := httptest.NewRequest("GET", "/api/nao-existe", nil)
 	rec := httptest.NewRecorder()
@@ -43,7 +43,7 @@ func TestRouter_UnknownPathFallsBackToIndexHTML(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	router := NewRouter(webDir)
+	router := NewRouter(webDir, newTestStore(t))
 
 	req := httptest.NewRequest("GET", "/rota/qualquer", nil)
 	rec := httptest.NewRecorder()
@@ -68,7 +68,7 @@ func TestRouter_ExistingStaticFileIsServedWithItsContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	router := NewRouter(webDir)
+	router := NewRouter(webDir, newTestStore(t))
 
 	req := httptest.NewRequest("GET", "/style.css", nil)
 	rec := httptest.NewRecorder()
