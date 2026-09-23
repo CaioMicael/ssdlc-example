@@ -29,11 +29,13 @@ type TaskStore interface {
 	Update(ctx context.Context, id string, p store.Patch) (store.Task, error)
 	SetArchived(ctx context.Context, id string, archived bool) (store.Task, error)
 	Ping(ctx context.Context) error
+	StartTimer(ctx context.Context, taskID string) (store.TimeEntry, bool, error)
+	StopTimer(ctx context.Context) (store.TimeEntry, error)
+	ActiveTimer(ctx context.Context) (store.TimeEntry, store.Task, bool, error)
+	TotalSeconds(ctx context.Context, taskID string) (int64, error)
 }
 
-// taskResponse is the JSON shape returned for a single task. total_seconds
-// is always 0 in this slice: time entries are introduced in a later slice
-// (fatia 2) and are not persisted yet.
+// taskResponse is the JSON shape returned for a single task.
 type taskResponse struct {
 	ID           string `json:"id"`
 	Title        string `json:"title"`
@@ -45,17 +47,24 @@ type taskResponse struct {
 	UpdatedAt    string `json:"updated_at"`
 }
 
-func toTaskResponse(t store.Task) taskResponse {
+// toTaskResponse builds the JSON shape for t, with total_seconds set to the
+// real sum of its finished time entries (spec P1 "Consultar e corrigir
+// apontamentos" AC2).
+func toTaskResponse(ctx context.Context, s TaskStore, t store.Task) (taskResponse, error) {
+	total, err := s.TotalSeconds(ctx, t.ID)
+	if err != nil {
+		return taskResponse{}, err
+	}
 	return taskResponse{
 		ID:           t.ID,
 		Title:        t.Title,
 		Description:  t.Description,
 		Status:       t.Status,
 		Archived:     t.Archived,
-		TotalSeconds: 0,
+		TotalSeconds: total,
 		CreatedAt:    t.CreatedAt,
 		UpdatedAt:    t.UpdatedAt,
-	}
+	}, nil
 }
 
 type createTaskRequest struct {
@@ -91,7 +100,12 @@ func handleCreateTask(s TaskStore) http.HandlerFunc {
 			return
 		}
 
-		writeJSON(w, http.StatusCreated, toTaskResponse(task))
+		resp, err := toTaskResponse(r.Context(), s, task)
+		if err != nil {
+			writeStoreError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusCreated, resp)
 	}
 }
 
@@ -136,7 +150,12 @@ func handleListTasks(s TaskStore) http.HandlerFunc {
 
 		resp := make([]taskResponse, 0, len(tasks))
 		for _, t := range tasks {
-			resp = append(resp, toTaskResponse(t))
+			tr, err := toTaskResponse(r.Context(), s, t)
+			if err != nil {
+				writeStoreError(w, err)
+				return
+			}
+			resp = append(resp, tr)
 		}
 
 		writeJSON(w, http.StatusOK, map[string]any{"tasks": resp})
@@ -173,7 +192,12 @@ func handleUpdateTask(s TaskStore) http.HandlerFunc {
 			return
 		}
 
-		writeJSON(w, http.StatusOK, toTaskResponse(task))
+		resp, err := toTaskResponse(r.Context(), s, task)
+		if err != nil {
+			writeStoreError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, resp)
 	}
 }
 
@@ -187,7 +211,12 @@ func handleArchiveTask(s TaskStore) http.HandlerFunc {
 			return
 		}
 
-		writeJSON(w, http.StatusOK, toTaskResponse(task))
+		resp, err := toTaskResponse(r.Context(), s, task)
+		if err != nil {
+			writeStoreError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, resp)
 	}
 }
 
@@ -201,7 +230,12 @@ func handleRestoreTask(s TaskStore) http.HandlerFunc {
 			return
 		}
 
-		writeJSON(w, http.StatusOK, toTaskResponse(task))
+		resp, err := toTaskResponse(r.Context(), s, task)
+		if err != nil {
+			writeStoreError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, resp)
 	}
 }
 
@@ -236,6 +270,10 @@ func writeStoreError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusNotFound, "TASK_NOT_FOUND", "task not found", nil)
 	case errors.Is(err, store.ErrArchived):
 		writeError(w, http.StatusConflict, "TASK_ARCHIVED", "task is archived", nil)
+	case errors.Is(err, store.ErrNotTrackable):
+		writeError(w, http.StatusConflict, "TASK_NOT_TRACKABLE", "task is not trackable", nil)
+	case errors.Is(err, store.ErrNoActiveTimer):
+		writeError(w, http.StatusConflict, "NO_ACTIVE_TIMER", "no active timer", nil)
 	default:
 		slog.Error("unexpected store error", "error", err)
 		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "internal server error", nil)

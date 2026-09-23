@@ -497,6 +497,22 @@ func (fakeFailingStore) Ping(ctx context.Context) error {
 	return fmt.Errorf("driver connection reset by peer at 10.0.0.5:5432")
 }
 
+func (fakeFailingStore) StartTimer(ctx context.Context, taskID string) (store.TimeEntry, bool, error) {
+	return store.TimeEntry{}, false, fmt.Errorf("driver connection reset by peer at 10.0.0.5:5432")
+}
+
+func (fakeFailingStore) StopTimer(ctx context.Context) (store.TimeEntry, error) {
+	return store.TimeEntry{}, fmt.Errorf("driver connection reset by peer at 10.0.0.5:5432")
+}
+
+func (fakeFailingStore) ActiveTimer(ctx context.Context) (store.TimeEntry, store.Task, bool, error) {
+	return store.TimeEntry{}, store.Task{}, false, fmt.Errorf("driver connection reset by peer at 10.0.0.5:5432")
+}
+
+func (fakeFailingStore) TotalSeconds(ctx context.Context, taskID string) (int64, error) {
+	return 0, fmt.Errorf("driver connection reset by peer at 10.0.0.5:5432")
+}
+
 // Edge case: an unexpected store failure maps to 500 INTERNAL_ERROR with a
 // generic message, never the underlying driver text.
 func TestCreateTask_UnexpectedStoreError_Returns500WithGenericMessage(t *testing.T) {

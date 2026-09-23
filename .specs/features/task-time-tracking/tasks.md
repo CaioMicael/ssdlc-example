@@ -226,8 +226,8 @@ Phase 1: T1 → T2 → T3 · Phase 2: T4
 
 **Done when**:
 
-- [ ] Testes: start 201; start repetido na mesma tarefa 200 sem duplicar; start após ativo em outra tarefa finaliza o anterior; tarefa `done`/arquivada → 409 `TASK_NOT_TRACKABLE`; id inexistente → 404; stop 200; stop sem ativo → 409 `NO_ACTIVE_TIMER`; `GET /api/v1/timer` com e sem ativo; `total_seconds` reflete a soma
-- [ ] Gate quick passa; 10+ testes novos
+- [x] Testes: start 201; start repetido na mesma tarefa 200 sem duplicar; start após ativo em outra tarefa finaliza o anterior; tarefa `done`/arquivada → 409 `TASK_NOT_TRACKABLE`; id inexistente → 404; stop 200; stop sem ativo → 409 `NO_ACTIVE_TIMER`; `GET /api/v1/timer` com e sem ativo; `total_seconds` reflete a soma
+- [x] Gate quick passa; 10+ testes novos
 
 **Tests**: unit
 **Gate**: quick
