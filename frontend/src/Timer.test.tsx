@@ -122,7 +122,7 @@ describe('Timer bar', () => {
 
     render(<App />)
 
-    expect(await screen.findByText(task1.title, { selector: 'div[role="status"] span' })).toBeInTheDocument()
+    expect(await screen.findByText(task1.title, { selector: 'output span' })).toBeInTheDocument()
   })
 
   it('does not show the bar when there is no active timer', async () => {

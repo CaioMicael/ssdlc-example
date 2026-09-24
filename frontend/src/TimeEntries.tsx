@@ -94,7 +94,7 @@ export function TimeEntries({ taskId }: Readonly<TimeEntriesProps>) {
               {editingId === entry.id ? (
                 <>
                   <label>
-                    Início
+                    <span>Início</span>
                     <input
                       aria-label="Início"
                       type="datetime-local"
@@ -103,7 +103,7 @@ export function TimeEntries({ taskId }: Readonly<TimeEntriesProps>) {
                     />
                   </label>
                   <label>
-                    Fim
+                    <span>Fim</span>
                     <input
                       aria-label="Fim"
                       type="datetime-local"

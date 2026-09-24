@@ -22,13 +22,13 @@ function App() {
       <h1>SSDLC Example</h1>
       <p>{STATUS_TEXT[health]}</p>
       {activeEntry && activeTask && (
-        <div role="status">
+        <output>
           <span>{activeTask.title}</span>
           <span>{formatHms(elapsedSeconds)}</span>
           <button type="button" onClick={() => stop()}>
             Parar
           </button>
-        </div>
+        </output>
       )}
       <TaskForm onCreate={create} />
       {error && <p role="alert">{error}</p>}

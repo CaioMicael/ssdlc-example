@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useReducer, useState } from 'react'
 import { getActiveTimer, startTimer, stopTimer } from './api/timer'
 import type { TimeEntry } from './api/timer'
 import type { Task } from './api/tasks'
@@ -13,7 +13,7 @@ export function useTimer() {
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   // Ticks once per second only to force a re-render; the displayed value below is
   // always recomputed from the server's started_at, never stored as its own state.
-  const [, forceTick] = useState(0)
+  const [, forceTick] = useReducer((tick: number) => tick + 1, 0)
 
   // AC10: restore the active timer from the server on mount/reload.
   useEffect(() => {
@@ -43,7 +43,7 @@ export function useTimer() {
     if (!activeEntry) return undefined
 
     const interval = setInterval(() => {
-      forceTick((t) => t + 1)
+      forceTick()
     }, 1000)
 
     return () => clearInterval(interval)
