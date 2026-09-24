@@ -32,17 +32,19 @@ export function TaskList({
 
   return (
     <div>
-      <label>
-        <input type="checkbox" checked={showArchived} onChange={onToggleArchived} />{' '}
-        <span>Mostrar arquivadas</span>
-      </label>
+      <div className="toolbar">
+        <label>
+          <input type="checkbox" checked={showArchived} onChange={onToggleArchived} />{' '}
+          <span>Mostrar arquivadas</span>
+        </label>
+      </div>
       {tasks.length === 0 ? (
-        <p>Nenhuma tarefa ainda</p>
+        <p className="empty">Nenhuma tarefa ainda</p>
       ) : (
-        <ul>
+        <ul className="tasks">
           {tasks.map((task) => (
-            <li key={task.id}>
-              <span>{task.title}</span>
+            <li className="task" key={task.id}>
+              <span className="task__title">{task.title}</span>
               <select
                 aria-label={`Status de ${task.title}`}
                 value={task.status}
@@ -52,7 +54,7 @@ export function TaskList({
                 <option value="in_progress">{STATUS_LABEL.in_progress}</option>
                 <option value="done">{STATUS_LABEL.done}</option>
               </select>
-              <span>Total: {formatHm(task.total_seconds)}</span>
+              <span className="task__total">Total: {formatHm(task.total_seconds)}</span>
               {task.status !== 'done' && !task.archived && (
                 <button type="button" onClick={() => onStartTimer(task.id)}>
                   Iniciar

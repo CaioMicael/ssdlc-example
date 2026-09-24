@@ -35,7 +35,7 @@ export function TaskForm({ onCreate }: Readonly<TaskFormProps>) {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form className="card" onSubmit={handleSubmit}>
       <div>
         <label htmlFor="task-title">Título</label>
         <input id="task-title" value={title} onChange={(e) => setTitle(e.target.value)} />

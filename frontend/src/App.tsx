@@ -18,13 +18,13 @@ function App() {
   const { activeEntry, activeTask, elapsedSeconds, start, stop } = useTimer()
 
   return (
-    <>
+    <main className="app">
       <h1>SSDLC Example</h1>
-      <p>{STATUS_TEXT[health]}</p>
+      <p className="health">{STATUS_TEXT[health]}</p>
       {activeEntry && activeTask && (
-        <output>
-          <span>{activeTask.title}</span>
-          <span>{formatHms(elapsedSeconds)}</span>
+        <output className="timerbar">
+          <span className="timerbar__task">{activeTask.title}</span>
+          <span className="timerbar__time">{formatHms(elapsedSeconds)}</span>
           <button type="button" onClick={() => stop()}>
             Parar
           </button>
@@ -41,7 +41,7 @@ function App() {
         onToggleArchived={toggleArchived}
         onStartTimer={(id) => start(id)}
       />
-    </>
+    </main>
   )
 }
 

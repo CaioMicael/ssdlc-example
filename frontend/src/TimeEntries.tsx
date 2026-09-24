@@ -83,7 +83,7 @@ export function TimeEntries({ taskId }: Readonly<TimeEntriesProps>) {
   if (loading) return <p>Carregando apontamentos...</p>
 
   return (
-    <div>
+    <div className="entries">
       {error && <p role="alert">{error}</p>}
       {entries.length === 0 ? (
         <p>Nenhum apontamento ainda</p>
@@ -128,7 +128,9 @@ export function TimeEntries({ taskId }: Readonly<TimeEntriesProps>) {
                   </span>
                   {' · '}
                   <span>
-                    {entry.duration_seconds !== null ? formatHms(entry.duration_seconds) : '--:--:--'}
+                    <span className="duration">
+                      {entry.duration_seconds !== null ? formatHms(entry.duration_seconds) : '--:--:--'}
+                    </span>
                   </span>{' '}
                   <button type="button" onClick={() => startEdit(entry)}>
                     Editar
