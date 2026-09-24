@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/CaioMicael/ssdlc-example/backend/internal/store"
 )
@@ -494,6 +495,34 @@ func (fakeFailingStore) SetArchived(ctx context.Context, id string, archived boo
 }
 
 func (fakeFailingStore) Ping(ctx context.Context) error {
+	return fmt.Errorf("driver connection reset by peer at 10.0.0.5:5432")
+}
+
+func (fakeFailingStore) StartTimer(ctx context.Context, taskID string) (store.TimeEntry, bool, error) {
+	return store.TimeEntry{}, false, fmt.Errorf("driver connection reset by peer at 10.0.0.5:5432")
+}
+
+func (fakeFailingStore) StopTimer(ctx context.Context) (store.TimeEntry, error) {
+	return store.TimeEntry{}, fmt.Errorf("driver connection reset by peer at 10.0.0.5:5432")
+}
+
+func (fakeFailingStore) ActiveTimer(ctx context.Context) (store.TimeEntry, store.Task, bool, error) {
+	return store.TimeEntry{}, store.Task{}, false, fmt.Errorf("driver connection reset by peer at 10.0.0.5:5432")
+}
+
+func (fakeFailingStore) TotalSeconds(ctx context.Context, taskID string) (int64, error) {
+	return 0, fmt.Errorf("driver connection reset by peer at 10.0.0.5:5432")
+}
+
+func (fakeFailingStore) ListEntries(ctx context.Context, taskID string) ([]store.TimeEntry, error) {
+	return nil, fmt.Errorf("driver connection reset by peer at 10.0.0.5:5432")
+}
+
+func (fakeFailingStore) UpdateEntry(ctx context.Context, id string, startedAt, endedAt *time.Time) (store.TimeEntry, error) {
+	return store.TimeEntry{}, fmt.Errorf("driver connection reset by peer at 10.0.0.5:5432")
+}
+
+func (fakeFailingStore) DeleteEntry(ctx context.Context, id string) error {
 	return fmt.Errorf("driver connection reset by peer at 10.0.0.5:5432")
 }
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func openTestStore(t *testing.T) *Store {
@@ -222,11 +223,13 @@ func TestUpdate_PartialUpdateChangesOnlySentFields_BumpsUpdatedAt(t *testing.T) 
 	s := openTestStore(t)
 	ctx := context.Background()
 
+	withNow(t, time.Date(2026, 9, 23, 10, 0, 0, 0, time.UTC))
 	task, err := s.Create(ctx, "Original title", "Original description")
 	if err != nil {
 		t.Fatalf("Create() error = %v", err)
 	}
 
+	withNow(t, time.Date(2026, 9, 23, 10, 0, 1, 0, time.UTC))
 	newTitle := "New title"
 	updated, err := s.Update(ctx, task.ID, Patch{Title: &newTitle})
 	if err != nil {
@@ -418,5 +421,80 @@ func TestList_DefaultLimitIsFifty(t *testing.T) {
 	}
 	if len(tasks) != 3 {
 		t.Fatalf("len(tasks) = %d, want 3 (all created tasks fit under the default limit of 50)", len(tasks))
+	}
+}
+
+// AC4 / edge case "Paginação 50": the cap must truncate a real overflowing
+// result set, not merely exist as a constant.
+func TestList_CapsAtFiftyWithMoreRows(t *testing.T) {
+	s := openTestStore(t)
+	ctx := context.Background()
+
+	for i := 0; i < 51; i++ {
+		if _, err := s.Create(ctx, "Task", ""); err != nil {
+			t.Fatalf("Create() error = %v", err)
+		}
+	}
+
+	all, err := s.List(ctx, Filter{})
+	if err != nil {
+		t.Fatalf("List() error = %v", err)
+	}
+	if len(all) != 50 {
+		t.Fatalf("len(List) = %d, want 50 (cap must truncate 51 rows)", len(all))
+	}
+}
+
+// Edge case "Fuso horário": timestamps are RFC 3339 in UTC, not a local or
+// loosely formatted string.
+func TestCreate_TimestampsAreRFC3339UTC(t *testing.T) {
+	s := openTestStore(t)
+
+	task, err := s.Create(context.Background(), "Task", "")
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+
+	for label, value := range map[string]string{"created_at": task.CreatedAt, "updated_at": task.UpdatedAt} {
+		parsed, err := time.Parse(time.RFC3339, value)
+		if err != nil {
+			t.Errorf("%s = %q, want RFC 3339: %v", label, value, err)
+			continue
+		}
+		if _, offset := parsed.Zone(); offset != 0 {
+			t.Errorf("%s = %q, want UTC (zero offset), got offset %d", label, value, offset)
+		}
+	}
+}
+
+// Regressão: a lista ordena por updated_at como TEXTO, então todo timestamp
+// precisa ter largura fixa. Com RFC3339Nano (que corta zeros à direita),
+// "...:00.5Z" compara como maior que "...:00.500000001Z" e a ordem sai
+// invertida, mesmo sendo o instante anterior.
+func TestList_OrderingHoldsForTrailingZeroFractions(t *testing.T) {
+	s := openTestStore(t)
+	ctx := context.Background()
+
+	withNow(t, time.Date(2026, 9, 23, 10, 0, 0, 500000000, time.UTC)) // .5
+	older, err := s.Create(ctx, "Mais antiga", "")
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+
+	withNow(t, time.Date(2026, 9, 23, 10, 0, 0, 500000001, time.UTC)) // .500000001
+	newer, err := s.Create(ctx, "Mais nova", "")
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+
+	list, err := s.List(ctx, Filter{})
+	if err != nil {
+		t.Fatalf("List() error = %v", err)
+	}
+	if len(list) != 2 {
+		t.Fatalf("len(List) = %d, want 2", len(list))
+	}
+	if list[0].ID != newer.ID || list[1].ID != older.ID {
+		t.Errorf("ordem = [%q %q], want [%q %q]", list[0].Title, list[1].Title, newer.Title, older.Title)
 	}
 }

@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	_ "modernc.org/sqlite"
 )
@@ -102,6 +101,10 @@ func Open(path string) (*Store, error) {
 		_ = db.Close()
 		return nil, fmt.Errorf("run migration: %w", err)
 	}
+	if _, err := db.Exec(timeEntriesSchema); err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("run migration: %w", err)
+	}
 
 	return &Store{db: db}, nil
 }
@@ -173,15 +176,15 @@ func (s *Store) Create(ctx context.Context, title, description string) (Task, er
 		return Task{}, err
 	}
 
-	now := time.Now().UTC().Format(time.RFC3339Nano)
+	createdAt := formatTime(now())
 	task := Task{
 		ID:          id,
 		Title:       trimmedTitle,
 		Description: description,
 		Status:      StatusTodo,
 		Archived:    false,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		CreatedAt:   createdAt,
+		UpdatedAt:   createdAt,
 	}
 
 	_, err = s.db.ExecContext(ctx,
@@ -261,11 +264,40 @@ func (s *Store) Get(ctx context.Context, id string) (Task, error) {
 	return t, nil
 }
 
+// getTaskTx reads a task within an existing transaction, mirroring Get.
+func getTaskTx(ctx context.Context, tx *sql.Tx, id string) (Task, error) {
+	row := tx.QueryRowContext(ctx,
+		`SELECT id, title, description, status, archived, created_at, updated_at
+		 FROM tasks WHERE id = ?`, id,
+	)
+
+	var t Task
+	var archived int
+	err := row.Scan(&t.ID, &t.Title, &t.Description, &t.Status, &archived, &t.CreatedAt, &t.UpdatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return Task{}, ErrNotFound
+	}
+	if err != nil {
+		return Task{}, fmt.Errorf("get task: %w", err)
+	}
+	t.Archived = archived != 0
+
+	return t, nil
+}
+
 // Update applies the non-nil fields of p to the task with the given id,
 // bumps updated_at, and returns the updated task. It returns ErrNotFound if
-// the task does not exist and ErrArchived if the task is archived.
+// the task does not exist and ErrArchived if the task is archived. If the
+// status changes to done and the task has an active timer, that timer is
+// finished with the server clock in the same transaction (spec P1 AC11).
 func (s *Store) Update(ctx context.Context, id string, p Patch) (Task, error) {
-	task, err := s.Get(ctx, id)
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return Task{}, fmt.Errorf("begin tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	task, err := getTaskTx(ctx, tx, id)
 	if err != nil {
 		return Task{}, err
 	}
@@ -293,14 +325,24 @@ func (s *Store) Update(ctx context.Context, id string, p Patch) (Task, error) {
 		task.Status = *p.Status
 	}
 
-	task.UpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
+	task.UpdatedAt = formatTime(now())
 
-	_, err = s.db.ExecContext(ctx,
+	_, err = tx.ExecContext(ctx,
 		`UPDATE tasks SET title = ?, description = ?, status = ?, updated_at = ? WHERE id = ?`,
 		task.Title, task.Description, task.Status, task.UpdatedAt, task.ID,
 	)
 	if err != nil {
 		return Task{}, fmt.Errorf("update task: %w", err)
+	}
+
+	if p.Status != nil && task.Status == StatusDone {
+		if err := finishActiveEntryForTaskTx(ctx, tx, task.ID); err != nil {
+			return Task{}, err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return Task{}, fmt.Errorf("commit: %w", err)
 	}
 
 	return task, nil
@@ -309,21 +351,39 @@ func (s *Store) Update(ctx context.Context, id string, p Patch) (Task, error) {
 // SetArchived sets the archived flag on the task with the given id, keeping
 // every other field, and bumps updated_at. It is idempotent: setting the
 // same value it already has still succeeds and still bumps updated_at.
+// Archiving a task with an active timer finishes that timer with the server
+// clock in the same transaction (spec P2 AC2).
 func (s *Store) SetArchived(ctx context.Context, id string, archived bool) (Task, error) {
-	task, err := s.Get(ctx, id)
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return Task{}, fmt.Errorf("begin tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	task, err := getTaskTx(ctx, tx, id)
 	if err != nil {
 		return Task{}, err
 	}
 
 	task.Archived = archived
-	task.UpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
+	task.UpdatedAt = formatTime(now())
 
-	_, err = s.db.ExecContext(ctx,
+	_, err = tx.ExecContext(ctx,
 		`UPDATE tasks SET archived = ?, updated_at = ? WHERE id = ?`,
 		boolToInt(task.Archived), task.UpdatedAt, task.ID,
 	)
 	if err != nil {
 		return Task{}, fmt.Errorf("set archived: %w", err)
+	}
+
+	if archived {
+		if err := finishActiveEntryForTaskTx(ctx, tx, task.ID); err != nil {
+			return Task{}, err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return Task{}, fmt.Errorf("commit: %w", err)
 	}
 
 	return task, nil
